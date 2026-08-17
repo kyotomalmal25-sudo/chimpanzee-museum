@@ -1,0 +1,15 @@
+{
+  "images": [
+    { "file": "images/1.jpg", "name": "1", "alt": "1" },
+    { "file": "images/2.jpg", "name": "2", "alt": "2" },
+    { "file": "images/3.jpg", "name": "3", "alt": "3" },
+    { "file": "images/6.jpg", "name": "6", "alt": "6" },
+    { "file": "images/7.jpg", "name": "7", "alt": "7" },
+    { "file": "images/8.jpg", "name": "8", "alt": "8" },
+    { "file": "images/9.jpg", "name": "9", "alt": "9" },
+    { "file": "images/10.jpg", "name": "10", "alt": "10" },
+    { "file": "images/11.jpg", "name": "11", "alt": "11" },
+    { "file": "images/12.jpg", "name": "12", "alt": "12" },
+    { "file": "images/15.jpg", "name": "15", "alt": "15" }
+  ]
+}
