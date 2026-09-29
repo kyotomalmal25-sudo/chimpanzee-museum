@@ -1,0 +1,21 @@
+[hidden] { display: none !important; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding-top: 24px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.filter, .admin-link { border: 0; background: transparent; color: var(--muted); padding: 6px 0; font-size: .72rem; letter-spacing: .08em; }
+.filter[aria-pressed="true"] { color: var(--yellow); box-shadow: 0 1px var(--yellow); }
+.admin-link { color: var(--yellow); }
+.ai-credit { color: var(--yellow); white-space: nowrap; }
+.card-actions { display: flex; gap: 16px; padding: 8px 2px 0; }
+.notice { color: var(--muted); font-size: .8rem; }
+.notice[data-error="true"] { color: #ffb9a5; }
+dialog { width: min(460px, calc(100% - 32px)); max-height: calc(100vh - 40px); overflow: auto; border: 1px solid var(--line); background: var(--black-soft); color: var(--ink); padding: 28px; }
+dialog::backdrop { background: rgba(0,0,0,.85); }
+dialog h2 { color: var(--yellow); margin: 0 0 20px; font-size: 1.15rem; letter-spacing: .08em; }
+dialog label { display: grid; gap: 6px; margin: 16px 0; font-size: .85rem; }
+dialog input, dialog select, dialog textarea { width: 100%; color: var(--ink); background: var(--black); border: 1px solid rgba(242,242,236,.3); padding: 10px; font: inherit; }
+dialog textarea { resize: vertical; min-height: 84px; }
+.dialog-actions { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 24px; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+button:disabled { opacity: .5; cursor: default; }
+.lightbox-caption { font-size: .8rem; margin: 8px 0 0; color: var(--yellow); }
+.lightbox img { max-height: calc(100vh - 100px); }
