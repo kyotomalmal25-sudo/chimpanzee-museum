@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -62,6 +62,7 @@
     @media (max-width: 470px) { .gallery { grid-template-columns: 1fr; gap: 34px; } }
     @media (prefers-reduced-motion: reduce) { .image-button, .image-button img { transition-duration: 1ms; } }
   </style>
+  <link rel="stylesheet" href="admin.css">
 </head>
 <body>
   <main class="museum">
@@ -69,40 +70,36 @@
       <div><p class="museum-kicker"><span class="status-dot" aria-hidden="true"></span>PUBLIC ARCHIVE</p><h1>CHIMPANZEE<span>MUSEUM</span></h1></div>
       <p class="philosophy">BANANAS NEED NO REASON.</p>
     </header>
+    <div class="toolbar"><nav class="filters" id="filters" aria-label="制作AIで絞り込み"></nav><div><button class="admin-link" id="adminButton" type="button">管理</button><button class="admin-link" id="newButton" type="button" hidden>＋ 作品を投稿</button> <button class="admin-link" id="logoutButton" type="button" hidden>ログアウト</button></div></div>
+    <p class="notice" id="notice" role="status"></p><button class="admin-link" id="retryButton" type="button" hidden>再読み込み</button>
     <section class="gallery" id="gallery" aria-label="Chimpanzee Museum Gallery" aria-live="polite"></section>
     <footer class="footer"><div id="countLabel">0 IMAGES / PUBLIC ARCHIVE</div><nav class="pagination" aria-label="Gallery pages"><button class="page-button" id="prevButton" type="button">← PREV</button><span class="page-number" id="pageLabel">1 / 1</span><button class="page-button" id="nextButton" type="button">NEXT →</button></nav></footer>
   </main>
-  <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Original image viewer"><div class="lightbox-inner"><button class="close-button" id="closeButton" type="button">CLOSE</button><img id="lightboxImage" alt=""></div></div>
-  <script>
-    (() => {
-      'use strict';
-      const PAGE_SIZE = 9;
-      let images = [], currentPage = 0;
-      const $ = (id) => document.getElementById(id);
-      const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' }[char]));
-      function render() {
-        const pageCount = Math.max(1, Math.ceil(images.length / PAGE_SIZE));
-        currentPage = Math.min(currentPage, pageCount - 1);
-        const pageImages = images.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
-        $('gallery').innerHTML = pageImages.length ? pageImages.map((image) => `<article class="card" data-file="${escapeHtml(image.file)}"><button class="image-button" type="button" data-action="view" aria-label="View ${escapeHtml(image.alt || image.name || image.file)}"><img src="${escapeHtml(image.file)}" alt="${escapeHtml(image.alt || image.name || image.file)}" loading="lazy"></button><div class="card-meta"><div class="filename" title="${escapeHtml(image.name || image.file)}">${escapeHtml(image.name || image.file)}</div><span class="mark" aria-hidden="true">●</span></div></article>`).join('') : '<div class="empty"><p><strong>NO EXHIBITS YET</strong>THE PUBLIC ARCHIVE IS BEING PREPARED</p></div>';
-        $('countLabel').textContent = `${images.length} ${images.length === 1 ? 'IMAGE' : 'IMAGES'} / PUBLIC ARCHIVE`;
-        $('pageLabel').textContent = `${currentPage + 1} / ${pageCount}`;
-        $('prevButton').disabled = currentPage === 0; $('nextButton').disabled = currentPage >= pageCount - 1;
-      }
-      function closeLightbox() { $('lightbox').hidden = true; $('lightboxImage').removeAttribute('src'); }
-      $('prevButton').addEventListener('click', () => { currentPage--; render(); });
-      $('nextButton').addEventListener('click', () => { currentPage++; render(); });
-      $('closeButton').addEventListener('click', closeLightbox);
-      $('lightbox').addEventListener('click', (event) => { if (event.target === $('lightbox')) closeLightbox(); });
-      document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !$('lightbox').hidden) closeLightbox(); });
-      $('gallery').addEventListener('click', (event) => {
-        const action = event.target.closest('[data-action]')?.dataset.action, card = event.target.closest('.card');
-        if (action !== 'view' || !card) return;
-        const image = images.find((item) => item.file === card.dataset.file); if (!image) return;
-        $('lightboxImage').src = image.file; $('lightboxImage').alt = image.alt || image.name || image.file; $('lightbox').hidden = false; $('closeButton').focus();
-      });
-      fetch('manifest.json', { cache: 'no-store' }).then((response) => { if (!response.ok) throw new Error('manifest'); return response.json(); }).then((data) => { images = Array.isArray(data) ? data : (Array.isArray(data.images) ? data.images : []); render(); }).catch(() => { $('gallery').innerHTML = '<div class="empty"><p><strong>ARCHIVE UNAVAILABLE</strong>CHECK MANIFEST.JSON</p></div>'; });
-    })();
-  </script>
+  <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Original image viewer"><div class="lightbox-inner"><button class="close-button" id="closeButton" type="button">CLOSE</button><img id="lightboxImage" alt=""><p class="lightbox-caption" id="lightboxCaption"></p></div></div>
+
+  <dialog id="loginDialog" aria-labelledby="loginHeading">
+    <h2 id="loginHeading">管理者ログイン</h2>
+    <form id="loginForm">
+      <label>メールアドレス<input id="emailInput" type="email" autocomplete="username" required></label>
+      <label>パスワード<input id="passwordInput" type="password" autocomplete="current-password" required></label>
+      <p class="notice" id="loginNotice" role="status"></p>
+      <div class="dialog-actions"><button class="admin-link" id="loginSubmit" type="submit">ログイン</button><button class="admin-link" id="loginCancel" type="button">キャンセル</button></div>
+    </form>
+  </dialog>
+  <dialog id="editDialog" aria-labelledby="editHeading">
+    <h2 id="editHeading">作品を投稿</h2>
+    <form id="editForm">
+      <label>作品名<input id="titleInput" maxlength="120" required></label>
+      <label>制作AI<select id="aiInput" required></select></label>
+      <label>画像<input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" aria-describedby="fileHint"></label>
+      <p class="notice" id="fileHint"></p>
+      <label>画像の説明<textarea id="altInput" maxlength="500"></textarea></label>
+      <p class="notice" id="editNotice" role="status"></p>
+      <div class="dialog-actions"><button class="admin-link" id="saveButton" type="submit">保存して公開</button><button class="admin-link" id="editCancel" type="button">キャンセル</button></div>
+    </form>
+  </dialog>
+  <script src="supabase.js"></script>
+  <script type="module" src="app.js"></script>
+
 </body>
 </html>
