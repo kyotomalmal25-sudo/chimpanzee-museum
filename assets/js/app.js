@@ -115,7 +115,7 @@ function renderNav() {
     ${item('/', ICON.home, 'ホーム', null, here('home'))}
     <p class="nav-heading">The Collection</p>
     ${item('/collection', ICON.grid, 'すべての作品', total, here('collection', null) || (inWorkCtx && !route.ctx))}
-    ${ais.map(a => item(`/collection/${a.slug}`, `<b>${esc(a.mark)}</b>`, a.label, c.get(a.key), here('collection', a.key) || (inWorkCtx && route.ctx?.key === a.key), true)).join('')}
+    ${ais.map(a => item(`/collection/${a.slug}`, `<b>${esc(a.mark)}</b>`, a.label, c.get(a.key) || 0, here('collection', a.key) || (inWorkCtx && route.ctx?.key === a.key), true)).join('')}
     <p class="nav-heading">Museum</p>
     ${item('/about', ICON.about, 'この美術館について', null, here('about'))}`;
 
