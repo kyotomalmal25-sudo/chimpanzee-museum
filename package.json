@@ -3,10 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node build.mjs",
-    "test": "playwright test",
-    "serve": "node server.mjs"
-  },
-  "dependencies": { "@supabase/supabase-js": "2.117.2" },
-  "devDependencies": { "@playwright/test": "1.63.0" }
+    "serve": "node scripts/serve.mjs",
+    "samples": "node scripts/make-samples.cjs",
+    "test": "playwright test"
+  }
 }

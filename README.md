@@ -1,23 +1,70 @@
-# CHIMPANZEE MUSEUM
+# Chimpanzee Museum v2
 
-既存の黒地・黄緑の美術館デザインを維持し、制作AIの表示、AI別のフィルター、管理者の作品投稿・編集・削除を追加しています。
+自分で生成した画像を、自分で投稿・編集・削除できる小さなギャラリー。
+ビルド工程なし・依存なしの静的サイトです（HTML / CSS / ES Modules）。保存先は既存の Supabase（認証・DB・Storage）をそのまま使います。
 
 ## 構成
 
-GitHub PagesでHTML・CSS・JavaScript・既存画像を配信し、Supabase Auth・Database・Storageに接続します。独自のサーバーや外部CDNは不要です。公開キーを配置し、書き込みはデータベースと画像保存の権限で管理者だけに制限します。
+```
+index.html            シェル（サイドバー / ダイアログ）
+assets/css/site.css   デザイントークンと全スタイル
+assets/js/app.js      ルーティング・画面・管理UI
+assets/js/backend.js  Supabase 接続（読み込み・投稿・編集・削除）
+assets/js/image.js    ブラウザ内での縮小・WebP変換
+assets/js/config.js   サイト名・Supabase設定・AI一覧
+assets/fonts/         Instrument Serif / DM Sans / IBM Plex Mono（Latinサブセット, OFL）
+samples/              作品が0件のときだけ表示する見本画像
+vendor/supabase.js    supabase-js 2.117.2（MIT）
+_headers              Cloudflare Pages 用キャッシュ設定
+```
 
-GitHub Pagesの静的配信: https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages
-Supabase Storageの権限制御: https://supabase.com/docs/guides/storage/security/access-control
+## URL
 
-既存43作品の画像と並び順を維持。制作AIの記録がなかったため「未分類」にし、管理画面で指定できます。新規画像はJPEG・PNG・WebP・GIF、10MB以下です。作品名、画像説明、制作AIの変更と、画像差し替えができます。
+| URL | 内容 |
+|---|---|
+| `/` | ホーム（最新作＋最近の4点） |
+| `/collection` | すべての作品 |
+| `/collection/gpt` など | AI別の棚（作品0件の棚はメニューに出ない） |
+| `/work/<id>` | 鑑賞室（← → / スワイプ / ESC） |
+| `/about` | この美術館について |
+| `/admin` | 管理者ログイン（どこからもリンクしていない） |
 
-保存に成功してから古い画像を削除します。通信エラーで保存結果が不明の場合は画像を保持し、再読み込みを促します。別画面で変更された作品への更新・削除は拒否します。保存先が設定されている環境の接続障害時は、静的JSONから削除済みの作品を復活させず、エラーを表示します。
+## 投稿のしかた
 
-## 開発と検証
+1. `/admin` を開いてログイン
+2. 左メニューの「作品を投稿」→ 画像をドロップ（複数可）
+3. 作品名はファイル名から自動入力。制作AIはまとめて設定も個別設定もできる
+4. 「公開する」
 
-`npm ci` → `npm run build`。固定バージョンの公式Supabaseブラウザー配布物をルートの`supabase.js`にコピーします。
-`npm run serve`でローカル表示、`npm test`でChromeを使った操作検証を実行します。Chromeの場所は`playwright.config.js`で変更できます。
+画像はアップロード前にブラウザ内で **表示用（長辺2400px）** と **サムネイル（長辺720px）** の2つに縮小・WebP変換されます。元画像が重くても一覧は軽いまま。アニメGIFは表示用のみ元ファイルのまま保存。
 
-表示、AIフィルター、ページ送り、スマートフォン表示、画像拡大、障害時表示を検証。管理UIの投稿・編集・削除と画像保存の失敗処理はテスト用応答で検証しています。保存先では一般訪問者と管理者以外の書き込み拒否、管理者のCRUDを確認済みです。実アカウントでのログインと画像アップロードは、利用者自身の操作による確認が必要です。
+編集・削除は鑑賞室の「編集・削除」から。まとめて消すときは左メニューの「選択して削除」。
 
-保存先と管理者の初期設定資料は、公開リポジトリと別に管理しています。
+## Supabase 側
+
+既存のテーブル・バケットをそのまま使います（スキーマ変更なし）。
+
+- テーブル `museum_works`（id, title, alt, ai, file, storage_path, sort_order, created_at, updated_at）
+- テーブル `museum_admins`（user_id）
+- バケット `museum-images`：新規は `artworks/<uuid>.full.webp` と `artworks/<uuid>.thumb.webp` を保存
+
+## 公開（Cloudflare Pages）
+
+ビルド不要。リポジトリを Cloudflare Pages に接続し、Build command は空、Output directory は `/`。
+`404.html` を置いていないので、Cloudflare Pages が自動的に SPA として `index.html` を返します。
+
+OGP画像の `og:image` は相対パスなので、公開ドメインが決まったら `index.html` の `/og.png` を `https://<ドメイン>/og.png` に書き換えるとSNSのカードが確実に出ます。
+
+## ローカル確認
+
+```
+node scripts/serve.mjs            # http://127.0.0.1:4173
+http://127.0.0.1:4173/?demo       # Supabaseに接続せず見本画像で表示
+```
+
+テスト（Supabase をブラウザ内で模擬し、投稿〜削除まで15項目）:
+
+```
+node scripts/serve.mjs &
+NODE_PATH=$(npm root -g) node tests/e2e.cjs      # playwright と sharp が必要
+```
