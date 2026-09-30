@@ -270,7 +270,7 @@ function mockSupabase(page, db) {
     await page.waitForSelector('#uploadDialog:not([open])', { state: 'attached', timeout: 60000 });
     assert.equal(db.works.length, before + 1);
     assert.equal(db.works[db.works.length - 1].ai, 'Other');
-    const draft = await page.evaluate(() => JSON.parse(localStorage.getItem('cm-sketch-draft') || '{"strokes":[]}').strokes.length);
+    const draft = await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('cm-sketch-draft') || '{"layers":[]}'); return d.layers.reduce((n, l) => n + l.ops.length, 0); });
     assert.equal(draft, 0, 'draft cleared after publishing');
   });
 
