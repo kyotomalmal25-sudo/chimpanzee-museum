@@ -124,3 +124,21 @@ export async function deleteWork(work) {
   if (!data) throw new Error('別の画面で作品が変更されました。再読み込みしてください。');
   return work.storage_path ? removePaths([work.storage_path, thumbPathOf(work.storage_path)]) : null;
 }
+
+// ─── notes board ───
+export async function loadNotes() {
+  const { data, error } = await client.from(SUPABASE.notes).select('id,body,bold,color,size,created_at')
+    .order('created_at', { ascending: false }).limit(300);
+  if (error) throw error;
+  return data;
+}
+export async function addNote(note) {
+  const { data, error } = await client.from(SUPABASE.notes).insert(note).select('id,body,bold,color,size,created_at').single();
+  if (error) throw error;
+  return data;
+}
+export async function deleteNote(note) {
+  const { data, error } = await client.from(SUPABASE.notes).delete().eq('id', note.id).select('id').maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error('このメモはもう消えています。再読み込みしてください。');
+}

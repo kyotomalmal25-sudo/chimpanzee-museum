@@ -27,6 +27,7 @@ _headers              Cloudflare Pages 用キャッシュ設定
 | `/collection/gpt` など | AI別の棚（作品0件の棚はメニューに出ない） |
 | `/work/<id>` | 鑑賞室（← → / スワイプ / ESC） |
 | `/draw` | らくがき帳（ペン・マーカー・塗りつぶし・消しゴム、レイヤー最大8枚。管理者は描いた絵をそのまま作品として公開できる） |
+| `/notes` | ひとこと帳（1行メモの掲示板。書くのは管理者だけ、読むのは誰でも。通常／太字・色・大きさ） |
 | `/about` | この美術館について |
 | `/admin` | 管理者ログイン（どこからもリンクしていない） |
 
@@ -47,6 +48,7 @@ _headers              Cloudflare Pages 用キャッシュ設定
 
 - テーブル `museum_works`（id, title, alt, ai, file, storage_path, sort_order, created_at, updated_at）
 - テーブル `museum_admins`（user_id）
+- テーブル `museum_notes`（ひとこと帳。作成用SQLは `sql/museum_notes.sql`）
 - バケット `museum-images`：保存名は `artworks/<uuid>.<拡張子>` のみ許可（ストレージの制限）。表示用 `artworks/<uuid>.webp` と、uuidの最後のブロックを逆順にした名前のサムネイルを保存
 
 ## 公開（Cloudflare Pages）

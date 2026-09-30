@@ -62,6 +62,15 @@ function mockSupabase(page, db) {
       if (m === 'PATCH') { if (!row) return out([]); Object.assign(row, JSON.parse(req.postData()), { updated_at: now() + 'x' }); return out([row]); }
       if (m === 'DELETE') { if (!row) return out([]); db.works = db.works.filter(w => w !== row); return out([{ id: row.id }]); }
     }
+    if (url.pathname === '/rest/v1/museum_notes') {
+      if (db.notesMissing) return json({ code: 'PGRST205', message: "Could not find the table 'public.museum_notes' in the schema cache" }, 404);
+      db.notes ||= [];
+      const authed = (req.headers()['authorization'] || '').includes('tok');
+      if (m === 'GET') return json([...db.notes].sort((a, b) => b.created_at.localeCompare(a.created_at)));
+      if (!authed) return json({ message: 'new row violates row-level security policy' }, 401);
+      if (m === 'POST') { const v = JSON.parse(req.postData()); const row = { id: `n${++db.seq}`, created_at: new Date(Date.now() + db.seq).toISOString(), ...v }; db.notes.push(row); return out([row]); }
+      if (m === 'DELETE') { const id = url.searchParams.get('id')?.replace('eq.', ''); const row = db.notes.find(n => n.id === id); db.notes = db.notes.filter(n => n !== row); return out(row ? [{ id }] : []); }
+    }
     if (url.pathname.startsWith('/storage/v1/object/public/')) {
       const key = url.pathname.replace('/storage/v1/object/public/museum-images/', '');
       const f = uploads.get(key);
@@ -274,9 +283,59 @@ function mockSupabase(page, db) {
     assert.equal(draft, 0, 'draft cleared after publishing');
   });
 
+  await step('notes: admin writes styled one-liners, deletes one', async () => {
+    await page.goto(`${BASE}/notes`);
+    await page.waitForSelector('#ntInput');
+    await page.waitForSelector('.nt-empty');
+    await page.click('[data-bold="true"]');
+    await page.click('#notesApp [data-color="#C8453A"]');
+    await page.click('[data-nsize="xl"]');
+    await page.fill('#ntInput', '大きくて赤い太字');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('.nt-note');
+    await page.click('[data-bold="false"]');
+    await page.click('[data-nsize="s"]');
+    await page.fill('#ntInput', '小さな通常の文字');
+    await page.click('#ntSend');
+    await page.waitForFunction(() => document.querySelectorAll('.nt-note').length === 2);
+    const first = page.locator('.nt-note').first().locator('.nt-body');
+    assert.equal(await first.textContent(), '小さな通常の文字');
+    const second = page.locator('.nt-note').nth(1).locator('.nt-body');
+    assert.ok(await second.evaluate(e => e.classList.contains('is-bold') && e.classList.contains('size-xl')));
+    assert.equal(await second.evaluate(e => getComputedStyle(e).color), 'rgb(200, 69, 58)');
+    assert.deepEqual(db.notes.map(n => [n.bold, n.color, n.size]).sort(), [[false, '#C8453A', 's'], [true, '#C8453A', 'xl']].sort());
+    await page.fill('#ntInput', '書いている途中の文字も、このままの見た目');
+    await page.click('[data-bold="true"]');
+    await page.click('#notesApp [data-color="#1F9A78"]');
+    await page.click('[data-nsize="l"]');
+    await page.waitForTimeout(400);
+    assert.equal(await page.inputValue('#ntInput'), '書いている途中の文字も、このままの見た目', 'style changes keep the typed text');
+    await page.screenshot({ path: `${SHOTS}/notes-compose.png` });
+    await page.fill('#ntInput', '');
+    await page.locator('.nt-note').first().hover();
+    await page.locator('.nt-note').first().locator('[data-act="note-del"]').click();
+    await page.waitForFunction(() => document.querySelectorAll('.nt-note').length === 1);
+    assert.equal(db.notes.length, 1);
+    await page.screenshot({ path: `${SHOTS}/notes-admin.png` });
+  });
+
   await step('logout hides admin tools', async () => {
     await page.click('[data-act="logout"]');
     await page.waitForSelector('#adminTools', { state: 'hidden' });
+  });
+
+  await step('notes: visitors can read but not write', async () => {
+    await page.goto(`${BASE}/notes`);
+    await page.waitForSelector('.nt-note');
+    assert.equal(await page.locator('#ntInput').count(), 0);
+    assert.equal(await page.locator('[data-act="note-del"]').count(), 0);
+  });
+
+  await step('notes: friendly message before the table exists', async () => {
+    db.notesMissing = true;
+    await page.goto(`${BASE}/notes`);
+    await page.waitForSelector('text=ひとこと帳は準備中です');
+    db.notesMissing = false;
   });
 
   await step('backend outage shows retry, not samples', async () => {

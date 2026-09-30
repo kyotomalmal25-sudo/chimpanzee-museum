@@ -4,6 +4,7 @@ import { SAMPLES } from './samples.js';
 import { checkFile } from './image.js';
 import { esc, pad3, fmtDate, store, titleFromFilename } from './util.js';
 import { drawView, mountDraw } from './draw.js';
+import { notesView, mountNotes } from './notes.js';
 
 const $ = id => document.getElementById(id);
 const main = $('main');
@@ -58,6 +59,7 @@ function parse(pathname, search) {
   if ((m = p.match(/^\/work\/([^/]+)$/))) return { name: 'work', id: decodeURIComponent(m[1]), ctx: aiBySlug(q.get('in') || '') };
   if (p === '/about') return { name: 'about' };
   if (p === '/draw') return { name: 'draw' };
+  if (p === '/notes') return { name: 'notes' };
   if (p === '/admin') return { name: 'admin' };
   return { name: 'notfound' };
 }
@@ -96,6 +98,7 @@ const ICON = {
   grid: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M10 3v14M3 10h14"/></svg>',
   about: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 9v5M10 6.2v.1"/></svg>',
   shuffle: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6h3.2c1.6 0 2.6.8 3.5 2.2l.6 1c.9 1.4 1.9 2.2 3.5 2.2H17M14.5 9l2.5 2.4-2.5 2.4M3 13.6h3.2c1.2 0 2-.4 2.7-1.2M14.5 3.6 17 6l-2.5 2.4M11.3 7c.6-.6 1.3-1 2.5-1H17"/></svg>',
+  note: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4.5h12v8.5H9l-3.5 3v-3H4z"/><path d="M7 8h6M7 10.5h4"/></svg>',
   pencil: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16l1-4 8.5-8.5a2.1 2.1 0 013 3L8 15l-4 1z"/><path d="M12 5l3 3"/></svg>',
   plus: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>',
   check: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="m6.5 10 2.5 2.5 4.5-5"/></svg>',
@@ -159,6 +162,7 @@ function renderNav() {
     ${ais.map(a => item(`/collection/${a.slug}`, aiTile(a), a.label, c.get(a.key) || 0, here('collection', a.key) || (inWorkCtx && route.ctx?.key === a.key), true)).join('')}
     <p class="nav-heading">Museum</p>
     ${item('/draw', ICON.pencil, 'らくがき帳', null, here('draw'))}
+    ${item('/notes', ICON.note, 'ひとこと帳', null, here('notes'))}
     ${item('/about', ICON.about, 'この美術館について', null, here('about'))}`;
 
   const tools = $('adminTools');
@@ -392,6 +396,18 @@ function viewAbout() {
     ${footer()}`;
 }
 
+function viewNotes() {
+  return `
+    ${crumbs('PUBLIC ARCHIVE', 'NOTES')}
+    <section class="page-head compact-head">
+      <p class="mono eyebrow">ONE LINE AT A TIME.</p>
+      <h1 class="display md">Notes<span class="accent">.</span></h1>
+      <p class="lede">ひとことだけ、書き残しておく場所。${state.admin ? '' : '<br>書き込みは管理者だけです。'}</p>
+    </section>
+    ${notesView({ admin: state.admin })}
+    ${footer()}`;
+}
+
 function viewDraw() {
   return `
     ${crumbs('PUBLIC ARCHIVE', 'SKETCHBOOK')}
@@ -430,7 +446,7 @@ function viewError() {
     </section>`;
 }
 
-const TITLES = { home: 'Home', collection: 'Collection', about: 'About', draw: 'Sketchbook', notfound: 'Not found', admin: 'Admin' };
+const TITLES = { home: 'Home', collection: 'Collection', about: 'About', draw: 'Sketchbook', notes: 'Notes', notfound: 'Not found', admin: 'Admin' };
 
 let drawHandle = null;
 function render() {
@@ -444,6 +460,7 @@ function render() {
   else if (route.name === 'work') html = viewWork();
   else if (route.name === 'about') html = viewAbout();
   else if (route.name === 'draw') html = viewDraw();
+  else if (route.name === 'notes') html = viewNotes();
   else html = viewNotFound();
   main.innerHTML = html;
   main.dataset.view = route.name;
@@ -456,6 +473,9 @@ function render() {
   if (route.name === 'work') {
     const cur = main.querySelector('.strip [aria-current]'); const ol = main.querySelector('.strip ol');
     if (cur && ol) ol.scrollLeft = cur.parentElement.offsetLeft - ol.clientWidth / 2 + cur.offsetWidth / 2;
+  }
+  if (route.name === 'notes' && state.status !== 'loading') {
+    drawHandle = mountNotes(main.querySelector('#notesApp'), { admin: state.admin, demo, onToast: toast });
   }
   if (route.name === 'draw' && state.status !== 'loading') {
     drawHandle = mountDraw(main.querySelector('#sketchApp'), {

@@ -10,6 +10,7 @@ export const SUPABASE = {
   publishableKey: 'sb_publishable_dGlJm9WviigWZmjODQ5jbQ_CxQR9Hsy',
   table: 'museum_works',
   admins: 'museum_admins',
+  notes: 'museum_notes',
   bucket: 'museum-images',
   // Older rows store relative paths like `images/1.jpg`, served by the old GitHub Pages site.
   legacyBase: 'https://kyotomalmal25-sudo.github.io/chimpanzee-museum/',
