@@ -1,4 +1,4 @@
-import { SITE, AIS, aiByKey, aiBySlug, aiLabel } from './config.js';
+import { SITE, AIS, DEFAULT_AI, aiByKey, aiBySlug, aiLabel } from './config.js';
 import * as api from './backend.js';
 import { SAMPLES } from './samples.js';
 import { checkFile } from './image.js';
@@ -110,7 +110,7 @@ function renderNav() {
     <a class="nav-item${active ? ' is-active' : ''}" href="${href}" ${active ? 'aria-current="page"' : ''} title="${esc(label)}">
       <span class="nav-ico${mono ? ' mono' : ''}">${icon}</span><span class="nav-label">${esc(label)}</span>${count === null ? '' : `<span class="nav-count">${String(count).padStart(2, '0')}</span>`}
     </a>`;
-  const ais = AIS.filter(a => c.get(a.key));
+  const ais = AIS.filter(a => a.menu || c.get(a.key));
   $('nav').innerHTML = `
     ${item('/', ICON.home, 'ホーム', null, here('home'))}
     <p class="nav-heading">The Collection</p>
@@ -234,6 +234,8 @@ function viewCollection() {
         <div class="tool-btns">
           <button class="btn ghost small" type="button" data-sel="all">すべて選択</button>
           <button class="btn ghost small" type="button" data-sel="cancel">キャンセル</button>
+          <label class="sel-ai"><span class="sr">変更先の制作AI</span><select id="selAi">${aiOptions(DEFAULT_AI)}</select></label>
+          <button class="btn small" type="button" data-sel="setai" ${state.selected.size ? '' : 'disabled'}>制作AIを変更</button>
           <button class="btn danger small" type="button" data-sel="delete" ${state.selected.size ? '' : 'disabled'}>削除する</button>
         </div>` : `
         <p class="count"><span class="dot" aria-hidden="true"></span>${ai ? esc(ai.label) : 'すべての作品'} <span class="mono">/ ${list.length} WORKS</span></p>
@@ -389,7 +391,7 @@ main.addEventListener('click', e => {
     li.classList.toggle('is-picked', state.selected.has(pick));
     li.querySelector('[data-pick]').setAttribute('aria-pressed', String(state.selected.has(pick)));
     $('selCount').textContent = state.selected.size;
-    main.querySelector('[data-sel="delete"]').disabled = !state.selected.size;
+    main.querySelectorAll('[data-sel="delete"], [data-sel="setai"]').forEach(b => { b.disabled = !state.selected.size; });
     return;
   }
   const sel = e.target.closest('[data-sel]')?.dataset.sel;
@@ -399,6 +401,7 @@ main.addEventListener('click', e => {
     list.forEach(w => state.selected.add(String(w.id))); render();
   }
   if (sel === 'delete') bulkDelete();
+  if (sel === 'setai') bulkSetAi($('selAi').value);
 });
 
 document.addEventListener('keydown', e => {
@@ -497,7 +500,8 @@ document.querySelectorAll('dialog').forEach(d => {
   d.addEventListener('click', e => { if (e.target.closest('[data-close]') && !state.busy) d.close(); });
   d.addEventListener('cancel', e => { if (state.busy) e.preventDefault(); });
 });
-const aiOptions = sel => AIS.map(a => `<option value="${a.key}"${a.key === sel ? ' selected' : ''}>${esc(a.label)}</option>`).join('');
+const aiOptions = sel => AIS.filter(a => a.menu || a.key === 'Other' || a.key === 'Unknown' || a.key === sel)
+  .map(a => `<option value="${a.key}"${a.key === sel ? ' selected' : ''}>${esc(a.label)}</option>`).join('');
 
 // ─── upload (multi) ─────────────────────────────────────────────────────
 let queue = []; // {key, file, url, title, ai, alt, status, error}
@@ -505,7 +509,7 @@ let qKey = 0;
 function openUpload() {
   if (!state.admin) return;
   queue.forEach(q => URL.revokeObjectURL(q.url)); queue = [];
-  $('bulkAi').innerHTML = aiOptions(route.ai?.key || 'Unknown');
+  $('bulkAi').innerHTML = aiOptions(route.ai?.key || DEFAULT_AI);
   $('uploadMsg').textContent = '';
   drawQueue();
   $('uploadDialog').showModal();
@@ -657,6 +661,25 @@ async function bulkDelete() {
   if (!fail) state.selecting = false;
   await refresh();
   toast(fail ? `${ok} 件を削除、${fail} 件は失敗しました。` : `${ok} 件を削除しました。`, fail > 0);
+}
+
+async function bulkSetAi(ai) {
+  const targets = state.works.filter(w => state.selected.has(String(w.id)) && w.ai !== ai);
+  if (state.busy) return;
+  if (!targets.length) { toast(`選んだ作品はすでに ${aiLabel(ai)} です。`); return; }
+  if (!confirm(`${targets.length} 件の制作AIを「${aiLabel(ai)}」に変更しますか？`)) return;
+  state.busy = true;
+  main.querySelectorAll('[data-sel], [data-pick], #selAi').forEach(b => { b.disabled = true; });
+  let ok = 0, fail = 0, lastError = '';
+  for (const w of targets) {
+    try { await api.saveWork(w, { ai }, null); ok++; }
+    catch (err) { console.error(err); fail++; lastError = err.message || ''; }
+    const c = $('selCount'); if (c) c.textContent = `${ok}/${targets.length} 変更済み ·`;
+  }
+  state.busy = false;
+  if (!fail) { state.selecting = false; state.selected.clear(); }
+  await refresh();
+  toast(fail ? `${ok} 件を変更、${fail} 件は失敗しました。${lastError}` : `${ok} 件を ${aiLabel(ai)} に変更しました。`, fail > 0);
 }
 
 // ─── boot ───────────────────────────────────────────────────────────────

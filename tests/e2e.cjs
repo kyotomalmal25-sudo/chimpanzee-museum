@@ -134,7 +134,7 @@ function mockSupabase(page, db) {
     await page.setInputFiles('#uploadInput', [big, tall]);
     assert.equal(await page.locator('.q-item').count(), 2);
     assert.equal(await page.inputValue('.q-item >> nth=0 >> [data-f="title"]'), 'big landscape 01');
-    await page.selectOption('#bulkAi', 'Claude');
+    await page.selectOption('#bulkAi', 'Qwen');
     await page.fill('.q-item >> nth=1 >> [data-f="alt"]', '縦長のテスト');
     await page.screenshot({ path: `${SHOTS}/upload.png` });
     await page.click('#uploadSubmit');
@@ -143,7 +143,7 @@ function mockSupabase(page, db) {
     await page.waitForSelector('.grid .card');
     assert.equal(await page.locator('.card').count(), 2);
     assert.equal(db.works.length, 2);
-    assert.ok(db.works.every(w => w.ai === 'Claude'));
+    assert.ok(db.works.every(w => w.ai === 'Qwen'));
     const keys = [...store.uploads.keys()];
     assert.equal(keys.filter(k => k.endsWith('.full.webp')).length, 2, keys.join());
     assert.equal(keys.filter(k => k.endsWith('.thumb.webp')).length, 2);
@@ -211,6 +211,27 @@ function mockSupabase(page, db) {
     assert.equal(db.works.length, 1);
   });
 
+  await step('menu always lists Grok, GPT, Gemini, Qwen, MAI', async () => {
+    const labels = await page.locator('#nav .nav-item .nav-label').allTextContents();
+    for (const l of ['Grok', 'GPT', 'Gemini', 'Qwen', 'MAI']) assert.ok(labels.includes(l), labels.join());
+    assert.ok(!labels.includes('Kimi'), labels.join());
+  });
+
+  await step('bulk change AI to Grok (legacy row keeps old image URL)', async () => {
+    db.works.push({ id: 'legacy1', title: 'old', ai: 'Unknown', file: 'images/1.jpg', storage_path: null, sort_order: 5, created_at: '2026-01-01T00:00:00Z', updated_at: 'u1' });
+    await page.goto(`${BASE}/collection`);
+    await page.waitForSelector('#adminTools:not([hidden])');
+    await page.click('[data-act="select"]');
+    await page.click('[data-sel="all"]');
+    await page.selectOption('#selAi', 'Grok');
+    await page.click('[data-sel="setai"]');
+    await page.waitForFunction(() => !document.querySelector('[data-sel]'));
+    assert.ok(db.works.every(w => w.ai === 'Grok'), db.works.map(w => w.ai).join());
+    assert.equal(await page.locator('.nav-item[href="/collection/grok"] .nav-count').textContent(), String(db.works.length).padStart(2, '0'));
+    const legacy = await page.locator('img[alt="old"]').getAttribute('src');
+    assert.ok(legacy.startsWith('https://kyotomalmal25-sudo.github.io/chimpanzee-museum/images/1.jpg'), legacy);
+  });
+
   await step('bulk select delete', async () => {
     await page.goto(`${BASE}/collection`);
     await page.waitForSelector('#adminTools:not([hidden])');
@@ -246,8 +267,8 @@ function mockSupabase(page, db) {
     await m.click('#drawerOpen');
     await m.waitForTimeout(450);
     await m.screenshot({ path: `${SHOTS}/m-drawer.png` });
-    await m.click('.nav-item[href="/collection/claude"]');
-    await m.waitForFunction(() => location.pathname === '/collection/claude');
+    await m.click('.nav-item[href="/collection/grok"]');
+    await m.waitForFunction(() => location.pathname === '/collection/grok');
     await m.waitForTimeout(400);
     assert.equal(await m.evaluate(() => getComputedStyle(document.getElementById('side')).visibility), 'hidden');
     await m.close();
