@@ -1,9 +1,13 @@
 /samples/*
   Cache-Control: public, max-age=31536000, immutable
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
 /vendor/*
   Cache-Control: public, max-age=604800
-/assets/*
-  Cache-Control: public, max-age=3600
+/assets/js/*
+  Cache-Control: no-cache
+/assets/css/*
+  Cache-Control: no-cache
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
