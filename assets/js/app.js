@@ -101,6 +101,9 @@ const ICON = {
   arrow: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11.5M11 5l5 5-5 5"/></svg>',
 };
 
+// Monogram tile for an AI: first letter upright, second letter italic.
+const aiTile = a => `<i class="ai-tile" style="--tile-bg:${a.tint[0]};--tile-fg:${a.tint[1]}" aria-hidden="true">${esc(a.mark.slice(0, 1))}<em>${esc(a.mark.slice(1))}</em></i>`;
+
 function renderNav() {
   const c = counts();
   const total = shown().length;
@@ -108,14 +111,14 @@ function renderNav() {
   const inWorkCtx = route.name === 'work';
   const item = (href, icon, label, count, active, mono = false) => `
     <a class="nav-item${active ? ' is-active' : ''}" href="${href}" ${active ? 'aria-current="page"' : ''} title="${esc(label)}">
-      <span class="nav-ico${mono ? ' mono' : ''}">${icon}</span><span class="nav-label">${esc(label)}</span>${count === null ? '' : `<span class="nav-count">${String(count).padStart(2, '0')}</span>`}
+      <span class="nav-ico${mono ? ' is-ai' : ''}">${icon}</span><span class="nav-label">${esc(label)}</span>${count === null ? '' : `<span class="nav-count">${String(count).padStart(2, '0')}</span>`}
     </a>`;
   const ais = AIS.filter(a => a.menu || c.get(a.key));
   $('nav').innerHTML = `
     ${item('/', ICON.home, 'ホーム', null, here('home'))}
     <p class="nav-heading">The Collection</p>
     ${item('/collection', ICON.grid, 'すべての作品', total, here('collection', null) || (inWorkCtx && !route.ctx))}
-    ${ais.map(a => item(`/collection/${a.slug}`, `<b>${esc(a.mark)}</b>`, a.label, c.get(a.key) || 0, here('collection', a.key) || (inWorkCtx && route.ctx?.key === a.key), true)).join('')}
+    ${ais.map(a => item(`/collection/${a.slug}`, aiTile(a), a.label, c.get(a.key) || 0, here('collection', a.key) || (inWorkCtx && route.ctx?.key === a.key), true)).join('')}
     <p class="nav-heading">Museum</p>
     ${item('/about', ICON.about, 'この美術館について', null, here('about'))}`;
 
