@@ -26,7 +26,7 @@ export const AIS = [
   { key: 'Gemini', slug: 'gemini', label: 'Gemini', mark: 'Ge', menu: true },
   { key: 'Qwen', slug: 'qwen', label: 'Qwen', mark: 'Q', menu: true },
   { key: 'MAI', slug: 'mai', label: 'MAI', mark: 'M', menu: true },
-  { key: 'Claude', slug: 'claude', label: 'Claude', mark: 'C' },
+  { key: 'Claude', slug: 'claude', label: 'Claude', mark: 'C', menu: true },
   { key: 'Kimi', slug: 'kimi', label: 'Kimi', mark: 'K' },
   { key: 'Other', slug: 'other', label: 'その他', mark: '+' },
   { key: 'Unknown', slug: 'unknown', label: '未分類', mark: '·' },

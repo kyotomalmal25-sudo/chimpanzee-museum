@@ -211,9 +211,9 @@ function mockSupabase(page, db) {
     assert.equal(db.works.length, 1);
   });
 
-  await step('menu always lists Grok, GPT, Gemini, Qwen, MAI', async () => {
+  await step('menu always lists Grok, GPT, Gemini, Qwen, MAI, Claude', async () => {
     const labels = await page.locator('#nav .nav-item .nav-label').allTextContents();
-    for (const l of ['Grok', 'GPT', 'Gemini', 'Qwen', 'MAI']) assert.ok(labels.includes(l), labels.join());
+    for (const l of ['Grok', 'GPT', 'Gemini', 'Qwen', 'MAI', 'Claude']) assert.ok(labels.includes(l), labels.join());
     assert.ok(!labels.includes('Kimi'), labels.join());
     const counts = await page.locator('#nav .nav-count').allTextContents();
     assert.ok(counts.every(t => /^\d{2,}$/.test(t)), 'counts: ' + counts.join());
