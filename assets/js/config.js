@@ -16,8 +16,6 @@ export const SUPABASE = {
 };
 
 // key = value stored in the database `ai` column.
-// pinned: always shown in the menu, even with 0 works. Others appear only when they have works.
-// key = value stored in the database `ai` column.
 // menu: the categories shown in the menu and offered when posting (always, even with 0 works).
 // The rest stay readable for older rows and appear in the menu only while they have works.
 export const AIS = [
