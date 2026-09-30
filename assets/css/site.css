@@ -101,7 +101,7 @@ kbd { font-family: var(--mono); font-size: 10px; border: 1px solid var(--line-2)
 .nav-ico { display: inline-grid; place-items: center; width: 20px; height: 20px; flex: none; }
 .nav-ico.is-ai { width: 20px; height: 20px; }
 .ai-orb {
-  display: block; flex: none; width: 18px; height: 18px; border-radius: 50%;
+  display: block; flex: none; width: 15px; height: 15px; border-radius: 50%;
   filter: drop-shadow(0 1px 1.2px rgba(38, 39, 31, .28));
   transition: transform .25s var(--ease);
 }
@@ -130,7 +130,7 @@ kbd { font-family: var(--mono); font-size: 10px; border: 1px solid var(--line-2)
 .shell[data-rail="true"] .side-head { flex-direction: column; gap: 14px; margin-bottom: 18px; }
 .shell[data-rail="true"] .nav { align-items: center; gap: 4px; }
 .shell[data-rail="true"] .nav-item { width: 44px; height: 44px; padding: 0; justify-content: center; }
-.shell[data-rail="true"] .nav-ico .ai-orb { width: 20px; height: 20px; }
+.shell[data-rail="true"] .nav-ico .ai-orb { width: 17px; height: 17px; }
 .shell[data-rail="true"] .nav-item + .nav-heading + .nav-item,
 .shell[data-rail="true"] .admin-tools { margin-top: 14px; }
 .shell[data-rail="true"] .admin-tools { border-bottom: 0; border-top: 1px solid var(--line); padding-top: 12px; align-items: center; }
@@ -330,7 +330,7 @@ kbd { font-family: var(--mono); font-size: 10px; border: 1px solid var(--line-2)
   .shell .side-head { flex-direction: column; gap: 14px; margin-bottom: 18px; }
   .shell .nav { align-items: center; gap: 4px; }
   .shell .nav-item { width: 44px; height: 44px; padding: 0; justify-content: center; }
-  .shell .nav-ico .ai-orb { width: 20px; height: 20px; }
+  .shell .nav-ico .ai-orb { width: 17px; height: 17px; }
   .shell .admin-tools { border-bottom: 0; border-top: 1px solid var(--line); padding-top: 12px; align-items: center; }
   .rail-toggle { display: none; }
   .hero { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr); }
@@ -351,7 +351,7 @@ kbd { font-family: var(--mono); font-size: 10px; border: 1px solid var(--line-2)
   .shell .side .side-head { flex-direction: row; margin-bottom: 0; }
   .shell .side .nav { align-items: stretch; }
   .shell .side .nav-item { width: 100%; height: auto; min-height: 44px; padding: 0 10px 0 12px; justify-content: flex-start; }
-  .shell .side .nav-ico .ai-orb { width: 18px; height: 18px; }
+  .shell .side .nav-ico .ai-orb { width: 15px; height: 15px; }
   .shell .side .admin-tools { align-items: stretch; border-top: 0; border-bottom: 1px solid var(--line); padding-top: 4px; }
   .drawer-close { display: inline-grid; }
   .main { padding: 0 20px; }
