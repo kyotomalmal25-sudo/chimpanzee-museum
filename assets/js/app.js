@@ -101,21 +101,41 @@ const ICON = {
   arrow: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11.5M11 5l5 5-5 5"/></svg>',
 };
 
-// Glossy, oil-paint sphere for an AI category (inline SVG; shared filters live in index.html).
-const aiTile = a => {
-  const id = `orb-${a.slug}`;
+// Glossy, oil-paint sphere for an AI category. Each AI's sphere is drawn once as a
+// self-contained SVG and reused as an <img>, so dozens of cards stay cheap to render.
+const orbCache = new Map();
+function orbSrc(a) {
+  if (orbCache.has(a.key)) return orbCache.get(a.key);
   const dabs = a.paint.dabs.map(([c, x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`).join('');
-  return `<svg class="ai-orb" viewBox="0 0 40 40" aria-hidden="true">
-    <defs><clipPath id="${id}-c"><circle cx="20" cy="20" r="19"/></clipPath></defs>
-    <g clip-path="url(#${id}-c)">
-      <g filter="url(#cm-paint)"><rect x="-4" y="-4" width="48" height="48" fill="${a.paint.base}"/>${dabs}</g>
-      <circle cx="20" cy="20" r="19" fill="url(#cm-shade)"/>
-      <ellipse cx="14" cy="11.5" rx="8.5" ry="5.5" fill="url(#cm-gloss)" transform="rotate(-28 14 11.5)"/>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="80" height="80">
+    <defs>
+      <clipPath id="c"><circle cx="20" cy="20" r="19"/></clipPath>
+      <filter id="p" x="-10%" y="-10%" width="120%" height="120%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="soft"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.05 0.14" numOctaves="3" seed="7" result="noise"/>
+        <feDisplacementMap in="soft" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" result="smear"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="3" result="grain"/>
+        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .18 0" result="ga"/>
+        <feComposite in="ga" in2="smear" operator="in" result="gi"/>
+        <feBlend in="smear" in2="gi" mode="multiply"/>
+      </filter>
+      <radialGradient id="s" cx="38%" cy="34%" r="70%"><stop offset="55%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".38"/></radialGradient>
+      <radialGradient id="g" cx="50%" cy="45%" r="55%"><stop offset="0%" stop-color="#fff" stop-opacity=".85"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    </defs>
+    <g clip-path="url(#c)">
+      <g filter="url(#p)"><rect x="-4" y="-4" width="48" height="48" fill="${a.paint.base}"/>${dabs}</g>
+      <circle cx="20" cy="20" r="19" fill="url(#s)"/>
+      <ellipse cx="14" cy="11.5" rx="8.5" ry="5.5" fill="url(#g)" transform="rotate(-28 14 11.5)"/>
       <circle cx="12" cy="10" r="1.7" fill="#fff" opacity=".9"/>
     </g>
     <circle cx="20" cy="20" r="18.6" fill="none" stroke="rgba(38,39,31,.18)" stroke-width=".8"/>
   </svg>`;
-};
+  const src = 'data:image/svg+xml,' + encodeURIComponent(svg.replace(/\s{2,}/g, ' '));
+  orbCache.set(a.key, src);
+  return src;
+}
+const aiOrb = (a, cls = '') => `<img class="ai-orb${cls ? ' ' + cls : ''}" src="${orbSrc(a)}" alt="" aria-hidden="true">`;
+const aiTile = a => aiOrb(a);
 
 function renderNav() {
   const c = counts();
@@ -254,7 +274,7 @@ function viewCollection() {
           <button class="btn small" type="button" data-sel="setai" ${state.selected.size ? '' : 'disabled'}>制作AIを変更</button>
           <button class="btn danger small" type="button" data-sel="delete" ${state.selected.size ? '' : 'disabled'}>削除する</button>
         </div>` : `
-        <p class="count"><span class="dot" aria-hidden="true"></span>${ai ? esc(ai.label) : 'すべての作品'} <span class="mono">/ ${list.length} WORKS</span></p>
+        <p class="count">${ai ? aiOrb(ai, 'md') : '<span class="dot" aria-hidden="true"></span>'}${ai ? esc(ai.label) : 'すべての作品'} <span class="mono">/ ${list.length} WORKS</span></p>
         <div class="seg" role="group" aria-label="表示サイズ">
           <button type="button" data-size="large" aria-pressed="${state.size === 'large'}" title="大きく表示"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="6" height="14" rx="1"/><rect x="11" y="3" width="6" height="14" rx="1"/></svg><span class="sr">大きく表示</span></button>
           <button type="button" data-size="compact" aria-pressed="${state.size === 'compact'}" title="小さく表示"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg><span class="sr">小さく表示</span></button>
