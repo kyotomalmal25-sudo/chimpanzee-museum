@@ -230,17 +230,31 @@ function card(w, ctx) {
     : `<li class="card"><a class="card-link" href="${href}">${inner}<span class="card-go mono" aria-hidden="true">VIEW ${ICON.arrow}</span></a></li>`;
 }
 
-// A loose pencil sketch of gallery arches, drawn behind page heads.
-const SKETCH = cls => `<svg class="sketch ${cls}" viewBox="0 0 760 420" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true">
-  <defs><filter id="pencil-${cls}"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter></defs>
+// Faint pencil drawings. Home: the random piece hangs from a nail on a wire, with a loose
+// hand-drawn frame around it. Other page heads: a small gallery wall (three hung frames, a bench).
+const PENCIL = id => `<defs><filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="3.5"/></filter></defs>`;
+const HANG = `<svg class="sketch hang-wire" viewBox="0 0 480 80" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true">
+  ${PENCIL('pencil-wire')}
+  <g filter="url(#pencil-wire)" stroke-width="1.2" vector-effect="non-scaling-stroke">
+    <path d="M240 10L60 78M240 10L420 78" vector-effect="non-scaling-stroke"/><path d="M242 12L62 79" opacity=".45" vector-effect="non-scaling-stroke"/>
+  </g>
+</svg><span class="sketch hang-nail" aria-hidden="true"></span>
+<svg class="sketch hang-frame" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true">
+  ${PENCIL('pencil-frame')}
+  <g filter="url(#pencil-frame)">
+    <path d="M1 2L99 1L98.5 99L1.5 98.5Z" vector-effect="non-scaling-stroke" stroke-width="1.2"/>
+    <path d="M-1 4L100 -.5M101 3L99.5 101M.5 100.5L98 101.5M2.5 -1L.5 97" vector-effect="non-scaling-stroke" stroke-width="1" opacity=".5"/>
+  </g>
+</svg>`;
+const SKETCH = cls => `<svg class="sketch ${cls}" viewBox="0 0 520 300" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  ${PENCIL(`pencil-${cls}`)}
   <g filter="url(#pencil-${cls})" stroke-width="1.3">
-    <path d="M60 400V190c0-70 50-120 110-120s110 50 110 120v210"/><path d="M66 400V194c0-66 46-114 104-114s104 48 104 114v206" opacity=".55"/>
-    <path d="M300 400V150c0-86 62-146 140-146s140 60 140 146v250"/><path d="M307 400V155c0-80 58-138 133-138s133 58 133 138v245" opacity=".55"/>
-    <path d="M600 400V210c0-58 40-98 90-98"/><path d="M20 402h730" /><path d="M40 410h650" opacity=".5"/>
-    <rect x="355" y="170" width="170" height="130" rx="2"/><rect x="368" y="183" width="144" height="104" opacity=".6"/>
-    <rect x="115" y="215" width="110" height="82"/><path d="M640 250h70v60h-70z" opacity=".7"/>
-    <path d="M378 330c20 6 104 6 124 0M120 318c20 5 80 5 100 0" opacity=".45"/>
-    <path d="M325 60l-18 30M338 52l-22 38M556 60l18 30M543 52l22 38" opacity=".35"/>
+    <path d="M52 40l-40 44M52 40l40 44"/><circle cx="52" cy="38" r="2.5"/><rect x="10" y="84" width="84" height="110"/><rect x="20" y="94" width="64" height="90" opacity=".5"/>
+    <path d="M226 22l-66 50M226 22l66 50"/><circle cx="226" cy="20" r="2.5"/><rect x="146" y="72" width="160" height="112"/><rect x="157" y="83" width="138" height="90" opacity=".5"/>
+    <path d="M388 60l-34 30M388 60l34 30"/><circle cx="388" cy="58" r="2.5"/><rect x="340" y="90" width="96" height="72"/><rect x="349" y="99" width="78" height="54" opacity=".5"/>
+    <path d="M212 204h28v10h-28z" opacity=".6"/>
+    <path d="M150 256h160M150 256v-8h160v8M160 256v26M300 256v26M156 264h4M300 264h4" />
+    <path d="M0 284h510" /><path d="M20 292h440" opacity=".45"/>
   </g>
 </svg>`;
 
@@ -261,7 +275,6 @@ function viewHome() {
   return `
     ${crumbs('PUBLIC ARCHIVE', 'WELCOME')}
     <section class="hero">
-      ${SKETCH('hero-sketch')}
       <div class="hero-copy">
         <p class="mono eyebrow"><span class="dot" aria-hidden="true"></span>A PUBLIC MUSEUM OF AI &amp; CURIOSITY</p>
         <h1 class="display">Chimpanzee<br><em>Museum.</em></h1>
@@ -273,6 +286,7 @@ function viewHome() {
       </div>
       ${pick ? `
       <div class="hero-piece">
+        ${HANG}
         <a class="hero-link" href="/work/${encodeURIComponent(pick.id)}" aria-label="${esc(titleOf(pick))} を見る">
           <span class="mat tall"><img src="${full(pick)}" alt="${esc(pick.alt || titleOf(pick))}" fetchpriority="high" decoding="async"></span>
         </a>
