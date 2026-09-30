@@ -50,7 +50,7 @@ _headers              Cloudflare Pages 用キャッシュ設定
 
 ## 公開（Cloudflare Pages）
 
-ビルド不要。リポジトリを Cloudflare Pages に接続し、Build command は空、Output directory は `/`。
+ビルド不要。リポジトリを 公開中: https://chimpanzee-museum-v2.pages.dev （Cloudflare Pages / Direct Upload プロジェクト `chimpanzee-museum-v2`）。
 `404.html` を置いていないので、Cloudflare Pages が自動的に SPA として `index.html` を返します。
 
 OGP画像の `og:image` は相対パスなので、公開ドメインが決まったら `index.html` の `/og.png` を `https://<ドメイン>/og.png` に書き換えるとSNSのカードが確実に出ます。

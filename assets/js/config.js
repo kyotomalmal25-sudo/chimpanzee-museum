@@ -11,6 +11,8 @@ export const SUPABASE = {
   table: 'museum_works',
   admins: 'museum_admins',
   bucket: 'museum-images',
+  // Older rows store relative paths like `images/1.jpg`, served by the old GitHub Pages site.
+  legacyBase: 'https://kyotomalmal25-sudo.github.io/chimpanzee-museum/',
 };
 
 // key = value stored in the database `ai` column (unchanged from the old site)

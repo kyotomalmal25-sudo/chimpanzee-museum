@@ -19,13 +19,15 @@ export const thumbPathOf = storagePath => {
   const m = storagePath && storagePath.match(FULL_RE);
   return m ? storagePath.replace(FULL_RE, `.thumb.${m[1] || m[2]}`) : null;
 };
+const resolve = file => new URL(file, /^[a-z]+:/i.test(file) ? undefined : (SUPABASE.legacyBase || location.origin + '/'));
 export function thumbUrl(work) {
   if (work.thumb) return work.thumb;
   const path = thumbPathOf(work.storage_path);
-  return path && client ? bucket().getPublicUrl(path).data.publicUrl : work.file;
+  return path && client ? bucket().getPublicUrl(path).data.publicUrl : fullUrl(work);
 }
 export function fullUrl(work) {
-  const url = new URL(work.file, location.href);
+  if (work.sample) return work.file;
+  const url = resolve(work.file);
   if (!['https:', 'http:'].includes(url.protocol)) throw new Error('画像URLが不正です。');
   return url.href;
 }
