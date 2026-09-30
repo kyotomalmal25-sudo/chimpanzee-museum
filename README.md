@@ -50,10 +50,11 @@ _headers              Cloudflare Pages 用キャッシュ設定
 
 ## 公開（Cloudflare Pages）
 
-ビルド不要。リポジトリを 公開中: https://chimpanzee-museum-v2.pages.dev （Cloudflare Pages / Direct Upload プロジェクト `chimpanzee-museum-v2`）。
+公開中: https://chimpanzee-museum-v2.pages.dev （Cloudflare Pages の Direct Upload プロジェクト `chimpanzee-museum-v2`）。ビルド不要。
+更新するときは、サイトのファイル（index.html, favicon.svg, og.png, _headers, assets/, samples/, vendor/）をzipにして、プロジェクトの「Create deployment」からアップロード。
 `404.html` を置いていないので、Cloudflare Pages が自動的に SPA として `index.html` を返します。
 
-OGP画像の `og:image` は相対パスなので、公開ドメインが決まったら `index.html` の `/og.png` を `https://<ドメイン>/og.png` に書き換えるとSNSのカードが確実に出ます。
+独自ドメインに移すときは `index.html` の `og:image` / `og:url` も書き換える。
 
 ## ローカル確認
 
