@@ -3,6 +3,7 @@ import * as api from './backend.js';
 import { SAMPLES } from './samples.js';
 import { checkFile } from './image.js';
 import { esc, pad3, fmtDate, store, titleFromFilename } from './util.js';
+import { drawView, mountDraw } from './draw.js';
 
 const $ = id => document.getElementById(id);
 const main = $('main');
@@ -56,6 +57,7 @@ function parse(pathname, search) {
   if ((m = p.match(/^\/collection\/([a-z]+)$/)) && aiBySlug(m[1])) return { name: 'collection', ai: aiBySlug(m[1]) };
   if ((m = p.match(/^\/work\/([^/]+)$/))) return { name: 'work', id: decodeURIComponent(m[1]), ctx: aiBySlug(q.get('in') || '') };
   if (p === '/about') return { name: 'about' };
+  if (p === '/draw') return { name: 'draw' };
   if (p === '/admin') return { name: 'admin' };
   return { name: 'notfound' };
 }
@@ -92,6 +94,7 @@ const ICON = {
   home: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 9 10 3.5 16.5 9v7.5h-4.5v-5h-4v5H3.5z"/></svg>',
   grid: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M10 3v14M3 10h14"/></svg>',
   about: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 9v5M10 6.2v.1"/></svg>',
+  pencil: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16l1-4 8.5-8.5a2.1 2.1 0 013 3L8 15l-4 1z"/><path d="M12 5l3 3"/></svg>',
   plus: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>',
   check: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="m6.5 10 2.5 2.5 4.5-5"/></svg>',
   out: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4H4.5v12H8M12 6.5 15.5 10 12 13.5M15.5 10H8"/></svg>',
@@ -153,6 +156,7 @@ function renderNav() {
     ${item('/collection', ICON.grid, 'すべての作品', total, here('collection', null) || (inWorkCtx && !route.ctx))}
     ${ais.map(a => item(`/collection/${a.slug}`, aiTile(a), a.label, c.get(a.key) || 0, here('collection', a.key) || (inWorkCtx && route.ctx?.key === a.key), true)).join('')}
     <p class="nav-heading">Museum</p>
+    ${item('/draw', ICON.pencil, 'らくがき帳', null, here('draw'))}
     ${item('/about', ICON.about, 'この美術館について', null, here('about'))}`;
 
   const tools = $('adminTools');
@@ -371,6 +375,18 @@ function viewAbout() {
     ${footer()}`;
 }
 
+function viewDraw() {
+  return `
+    ${crumbs('PUBLIC ARCHIVE', 'SKETCHBOOK')}
+    <section class="page-head compact-head">
+      <p class="mono eyebrow">DRAW SOMETHING, FOR NO REASON.</p>
+      <h1 class="display md">Sketchbook<span class="accent">.</span></h1>
+      <p class="lede">ブラウザの上で、そのまま描けるらくがき帳。${state.admin ? '描いたものは、そのまま作品として公開できます。' : ''}</p>
+    </section>
+    ${drawView({ admin: state.admin })}
+    ${footer()}`;
+}
+
 function viewNotFound(msg = 'お探しのページは見つかりませんでした。') {
   return `
     ${crumbs('PUBLIC ARCHIVE', 'LOST')}
@@ -397,9 +413,11 @@ function viewError() {
     </section>`;
 }
 
-const TITLES = { home: 'Home', collection: 'Collection', about: 'About', notfound: 'Not found', admin: 'Admin' };
+const TITLES = { home: 'Home', collection: 'Collection', about: 'About', draw: 'Sketchbook', notfound: 'Not found', admin: 'Admin' };
 
+let drawHandle = null;
 function render() {
+  drawHandle?.destroy(); drawHandle = null;
   renderNav();
   let html;
   if (state.status === 'loading') html = viewLoading();
@@ -408,6 +426,7 @@ function render() {
   else if (route.name === 'collection') html = viewCollection();
   else if (route.name === 'work') html = viewWork();
   else if (route.name === 'about') html = viewAbout();
+  else if (route.name === 'draw') html = viewDraw();
   else html = viewNotFound();
   main.innerHTML = html;
   main.dataset.view = route.name;
@@ -420,6 +439,12 @@ function render() {
   if (route.name === 'work') {
     const cur = main.querySelector('.strip [aria-current]'); const ol = main.querySelector('.strip ol');
     if (cur && ol) ol.scrollLeft = cur.parentElement.offsetLeft - ol.clientWidth / 2 + cur.offsetWidth / 2;
+  }
+  if (route.name === 'draw' && state.status !== 'loading') {
+    drawHandle = mountDraw(main.querySelector('#sketchApp'), {
+      onToast: toast,
+      onPublish: (file, title) => { openUpload(); $('bulkAi').value = 'Other'; addFiles([file], { title }); pendingSketch = true; },
+    });
   }
   if (route.name === 'admin' && state.status !== 'loading') handleAdminRoute();
 }
@@ -558,20 +583,22 @@ const aiOptions = sel => AIS.filter(a => a.menu || a.key === 'Other' || a.key ==
 
 // ─── upload (multi) ─────────────────────────────────────────────────────
 let queue = []; // {key, file, url, title, ai, alt, status, error}
+let pendingSketch = false;
 let qKey = 0;
 function openUpload() {
   if (!state.admin) return;
+  pendingSketch = false;
   queue.forEach(q => URL.revokeObjectURL(q.url)); queue = [];
   $('bulkAi').innerHTML = aiOptions(route.ai?.key || DEFAULT_AI);
   $('uploadMsg').textContent = '';
   drawQueue();
   $('uploadDialog').showModal();
 }
-function addFiles(files) {
+function addFiles(files, overrides = {}) {
   const bad = [];
   for (const f of files) {
     try { checkFile(f); } catch (err) { bad.push(`${f.name}: ${err.message}`); continue; }
-    queue.push({ key: ++qKey, file: f, url: URL.createObjectURL(f), title: titleFromFilename(f.name), ai: $('bulkAi').value, alt: '', status: '', error: false });
+    queue.push({ key: ++qKey, file: f, url: URL.createObjectURL(f), title: overrides.title || titleFromFilename(f.name), ai: $('bulkAi').value, alt: '', status: '', error: false });
   }
   $('uploadMsg').textContent = bad.join(' / '); $('uploadMsg').dataset.error = String(bad.length > 0);
   drawQueue();
@@ -638,7 +665,11 @@ $('uploadForm').addEventListener('submit', async e => {
   queue = queue.filter(q => !q.done);
   setBusy(false, dlg);
   await refresh();
-  if (!queue.length) { dlg.close(); toast(`${ok} 件を公開しました。`); if (route.name !== 'collection') go('/collection'); }
+  if (!queue.length) {
+    dlg.close(); toast(`${ok} 件を公開しました。`);
+    if (pendingSketch) { drawHandle?.clearDraftAfterPublish(); pendingSketch = false; }
+    if (route.name !== 'collection') go('/collection');
+  }
   else { drawQueue(); $('uploadMsg').textContent = `${ok} 件を公開しました。残りの ${queue.length} 件は失敗しました。内容を確認してもう一度お試しください。`; $('uploadMsg').dataset.error = 'true'; }
 });
 function drawQueueStatus(q) {

@@ -250,6 +250,30 @@ function mockSupabase(page, db) {
     assert.equal(db.works.length, 0);
   });
 
+  await step('sketchbook: draw, then publish as a work', async () => {
+    await page.goto(`${BASE}/draw`);
+    await page.waitForSelector('#adminTools:not([hidden])');
+    await page.waitForSelector('[data-act="publish"]');
+    await page.evaluate(() => window.scrollTo(0, document.querySelector('.sketch-app').offsetTop - 10));
+    const box = await page.locator('#skLive').boundingBox();
+    await page.mouse.move(box.x + box.width * .2, box.y + box.height * .3);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * .7, box.y + box.height * .6, { steps: 12 });
+    await page.mouse.up();
+    const before = db.works.length;
+    await page.click('[data-act="publish"]');
+    await page.waitForSelector('#uploadDialog[open] .q-item');
+    assert.equal(await page.locator('.q-item').count(), 1);
+    assert.equal(await page.inputValue('.q-item [data-f="ai"]'), 'Other');
+    assert.match(await page.inputValue('.q-item [data-f="title"]'), /^らくがき \d{4}\.\d{2}\.\d{2} \d{2}:\d{2}$/);
+    await page.click('#uploadSubmit');
+    await page.waitForSelector('#uploadDialog:not([open])', { state: 'attached', timeout: 60000 });
+    assert.equal(db.works.length, before + 1);
+    assert.equal(db.works[db.works.length - 1].ai, 'Other');
+    const draft = await page.evaluate(() => JSON.parse(localStorage.getItem('cm-sketch-draft') || '{"strokes":[]}').strokes.length);
+    assert.equal(draft, 0, 'draft cleared after publishing');
+  });
+
   await step('logout hides admin tools', async () => {
     await page.click('[data-act="logout"]');
     await page.waitForSelector('#adminTools', { state: 'hidden' });
