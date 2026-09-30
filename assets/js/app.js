@@ -273,7 +273,8 @@ function viewHome() {
   const list = shown();
   let pick = list.find(w => String(w.id) === String(heroPickId));
   if (!pick) { pick = pickHero(list); heroPickId = pick?.id ?? null; }
-  const recent = list.slice(0, 4);
+  const recent = list.filter(w => String(w.id) !== String(pick?.id)).slice(0, 18);
+  const slideDur = Math.max(24, recent.length * 5);
   return `
     ${crumbs('PUBLIC ARCHIVE', 'WELCOME')}
     <section class="hero">
@@ -302,7 +303,9 @@ function viewHome() {
     ${recent.length ? `
     <section class="recent" aria-labelledby="recentTitle">
       <div class="section-head"><h2 class="h2" id="recentTitle">Recently added<span class="dot" aria-hidden="true"></span></h2><a class="link-arrow small" href="/collection">すべて見る ${ICON.arrow}</a></div>
-      <ul class="grid compact">${recent.map(w => card(w)).join('')}</ul>
+      <div class="slide-viewport">
+        <ul class="slide-track" style="--slide-dur:${slideDur}s">${recent.map(w => card(w)).join('')}${recent.length > 3 ? recent.map(w => card(w)).join('') : ''}</ul>
+      </div>
     </section>` : ''}
     ${footer()}`;
 }
@@ -374,7 +377,7 @@ function viewWork() {
       </div>
       <div class="zoom-bar" role="group" aria-label="拡大表示">
         <button class="zoom-btn" type="button" data-zoom-act="out" aria-label="縮小">${ICON.minus}</button>
-        <input class="zoom-range" type="range" id="zoomRange" min="50" max="150" step="10" value="100" aria-label="拡大率（50〜150%）">
+        <input class="zoom-range" type="range" id="zoomRange" min="50" max="200" step="10" value="100" aria-label="拡大率（50〜200%）">
         <button class="zoom-btn" type="button" data-zoom-act="in" aria-label="拡大">${ICON.plus}</button>
         <button class="zoom-value mono" type="button" id="zoomValue" data-zoom-act="reset" title="クリックで100%に戻す">100%</button>
       </div>
@@ -570,7 +573,7 @@ main.addEventListener('touchend', e => {
   if (t) go(workHref(t, ctx), { keepScroll: true });
 });
 
-// ─── viewing room: zoom 50–150% ─────────────────────────────────────────
+// ─── viewing room: zoom 50–200% ─────────────────────────────────────────
 let zoomBase = null; // {w,h} in px of the image at its natural 100% fit
 function captureZoomBase(done) {
   const img = $('stageImg');
@@ -588,7 +591,7 @@ function captureZoomBase(done) {
 function applyZoom(v) {
   const img = $('stageImg'), wrap = $('stageScroll'), val = $('zoomValue'), range = $('zoomRange');
   if (!img || !wrap) return;
-  v = Math.max(50, Math.min(150, Math.round(v / 10) * 10));
+  v = Math.max(50, Math.min(200, Math.round(v / 10) * 10));
   if (val) val.textContent = `${v}%`;
   if (range) range.value = String(v);
   if (!zoomBase) { captureZoomBase(() => applyZoom(v)); return; }

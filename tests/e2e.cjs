@@ -195,11 +195,12 @@ function mockSupabase(page, db) {
     assert.match(await page.title(), /big landscape 01/);
   });
 
-  await step('viewing room: zoom 50–150%, resets on next work', async () => {
+  await step('viewing room: zoom 50–200%, resets on next work', async () => {
     assert.equal(await page.locator('#zoomValue').textContent(), '100%');
-    await page.fill('#zoomRange', '150');
+    assert.equal(await page.locator('#zoomRange').getAttribute('max'), '200');
+    await page.fill('#zoomRange', '200');
     await page.dispatchEvent('#zoomRange', 'input');
-    assert.equal(await page.locator('#zoomValue').textContent(), '150%');
+    assert.equal(await page.locator('#zoomValue').textContent(), '200%');
     assert.match(await page.locator('#stageScroll').getAttribute('class'), /is-zoomed/);
     await page.click('#zoomValue');
     assert.equal(await page.locator('#zoomValue').textContent(), '100%');
