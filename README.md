@@ -46,7 +46,7 @@ _headers              Cloudflare Pages 用キャッシュ設定
 
 - テーブル `museum_works`（id, title, alt, ai, file, storage_path, sort_order, created_at, updated_at）
 - テーブル `museum_admins`（user_id）
-- バケット `museum-images`：新規は `artworks/<uuid>.full.webp` と `artworks/<uuid>.thumb.webp` を保存
+- バケット `museum-images`：保存名は `artworks/<uuid>.<拡張子>` のみ許可（ストレージの制限）。表示用 `artworks/<uuid>.webp` と、uuidの最後のブロックを逆順にした名前のサムネイルを保存
 
 ## 公開（Cloudflare Pages）
 

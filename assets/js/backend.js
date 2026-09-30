@@ -11,13 +11,17 @@ export const client = SUPABASE.url && SUPABASE.publishableKey && lib
 const bucket = () => client.storage.from(SUPABASE.bucket);
 const table = () => client.from(SUPABASE.table);
 
-// New uploads: `artworks/<uuid>.full.<ext>` + `artworks/<uuid>.thumb.<ext>` (same ext).
-// An animated GIF keeps its original as the full image: `artworks/<uuid>.full.<thumbExt>.gif`.
-// Older rows (single original image) have no thumbnail and use the full file.
-const FULL_RE = /\.full\.(?:(webp|jpg)\.)?([a-z0-9]+)$/i;
+// Storage only accepts `artworks/<uuid>.<ext>`. A new upload stores two files:
+//   display   artworks/<uuid>.<ext>
+//   thumbnail artworks/<uuid with its last group reversed>.<webp|jpg>
+// The thumbnail name is derived from the display name, so no extra column is needed.
+// Rows without a thumbnail (older uploads) fall back to the display image in the browser.
+const UUID_PATH = /^artworks\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.([a-z0-9]+)$/i;
+const thumbIdOf = id => id.slice(0, 24) + [...id.slice(24)].reverse().join('');
 export const thumbPathOf = storagePath => {
-  const m = storagePath && storagePath.match(FULL_RE);
-  return m ? storagePath.replace(FULL_RE, `.thumb.${m[1] || m[2]}`) : null;
+  const m = storagePath && storagePath.match(UUID_PATH);
+  if (!m || thumbIdOf(m[1]) === m[1]) return null;
+  return `artworks/${thumbIdOf(m[1])}.${m[2] === 'gif' ? 'webp' : m[2]}`;
 };
 const resolve = file => new URL(file, /^[a-z]+:/i.test(file) ? undefined : (SUPABASE.legacyBase || location.origin + '/'));
 export function thumbUrl(work) {
@@ -73,9 +77,10 @@ async function removePaths(paths) {
 async function uploadImage(file, onStep) {
   onStep?.('縮小しています');
   const { full, thumb } = await processImage(file);
-  const id = crypto.randomUUID();
-  const fullPath = full.ext === 'gif' ? `artworks/${id}.full.${thumb.ext}.gif` : `artworks/${id}.full.${full.ext}`;
-  const thumbPath = `artworks/${id}.thumb.${thumb.ext}`;
+  let id = crypto.randomUUID();
+  while (thumbIdOf(id) === id) id = crypto.randomUUID();
+  const fullPath = `artworks/${id}.${full.ext}`;
+  const thumbPath = `artworks/${thumbIdOf(id)}.${thumb.ext}`;
   onStep?.('アップロード中');
   const opts = blob => ({ contentType: blob.type, cacheControl: '31536000', upsert: false });
   const a = await bucket().upload(fullPath, full.blob, opts(full.blob));

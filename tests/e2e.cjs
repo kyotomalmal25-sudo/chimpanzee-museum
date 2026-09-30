@@ -69,6 +69,8 @@ function mockSupabase(page, db) {
     }
     if (url.pathname.startsWith('/storage/v1/object/museum-images/') && m === 'POST') {
       const key = url.pathname.replace('/storage/v1/object/museum-images/', '');
+      // Same rule as the real bucket policy: artworks/<uuid>.<ext>
+      if (!/^artworks\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[a-z0-9]+$/i.test(key)) return json({ statusCode: '403', error: 'Unauthorized', message: 'new row violates row-level security policy' }, 400);
       uploads.set(key, parseUpload(req));
       return json({ Key: `museum-images/${key}` });
     }
@@ -145,11 +147,13 @@ function mockSupabase(page, db) {
     assert.equal(db.works.length, 2);
     assert.ok(db.works.every(w => w.ai === 'Qwen'));
     const keys = [...store.uploads.keys()];
-    assert.equal(keys.filter(k => k.endsWith('.full.webp')).length, 2, keys.join());
-    assert.equal(keys.filter(k => k.endsWith('.thumb.webp')).length, 2);
+    assert.equal(keys.length, 4, keys.join());
+    const fulls = db.works.map(w => w.storage_path);
+    const thumbs = keys.filter(k => !fulls.includes(k));
+    assert.equal(thumbs.length, 2, keys.join());
     for (const [k, f] of store.uploads) {
       const meta = await sharp(f.body).metadata();
-      if (k.endsWith('.thumb.webp')) assert.ok(Math.max(meta.width, meta.height) <= 720, `thumb ${meta.width}x${meta.height}`);
+      if (thumbs.includes(k)) assert.ok(Math.max(meta.width, meta.height) <= 720, `thumb ${meta.width}x${meta.height}`);
       else assert.ok(Math.max(meta.width, meta.height) <= 2400, `full ${meta.width}x${meta.height}`);
       assert.equal(meta.format, 'webp');
     }
@@ -160,11 +164,13 @@ function mockSupabase(page, db) {
 
   await step('grid uses thumbnails, viewing room uses full', async () => {
     const src = await page.locator('.card img').first().getAttribute('src');
-    assert.ok(src.endsWith('.thumb.webp'), src);
+    const w0 = db.works.find(w => w.title === 'big landscape 01');
+    assert.ok(!src.endsWith(w0.storage_path) && /artworks\/[0-9a-f-]{36}\.webp$/.test(src), src);
+    assert.ok(await page.locator('.card img').first().evaluate(i => i.naturalWidth > 0 && i.naturalWidth <= 720), 'thumb loaded');
     await page.locator('.card-link').first().click();
     await page.waitForSelector('#stage img');
     const full = await page.locator('#stage img').getAttribute('src');
-    assert.ok(full.endsWith('.full.webp'), full);
+    assert.ok(full.endsWith(w0.storage_path), full);
     assert.ok(/^\/work\/w\d+$/.test(new URL(page.url()).pathname));
     assert.match(await page.title(), /big landscape 01/);
   });
@@ -200,7 +206,7 @@ function mockSupabase(page, db) {
     try { await page.waitForSelector('#editDialog:not([open])', { state: 'attached', timeout: 60000 }); }
     catch (e) { throw new Error('edit still open: ' + (await page.locator('#editMsg').innerText())); }
     assert.ok(store.removed.includes(before), 'old full removed');
-    assert.ok(store.removed.includes(before.replace('.full.webp', '.thumb.webp')), 'old thumb removed');
+    assert.equal(store.removed.length, 2, 'old full + thumb removed: ' + store.removed.join());
   });
 
   await step('delete from viewing room', async () => {

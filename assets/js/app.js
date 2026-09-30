@@ -177,7 +177,7 @@ function card(w, ctx) {
   const sel = state.selecting;
   const picked = state.selected.has(String(w.id));
   const inner = `
-    <span class="mat"><img src="${thumb(w)}" alt="${esc(w.alt || titleOf(w))}" loading="lazy" decoding="async"></span>
+    <span class="mat"><img src="${thumb(w)}" data-full="${full(w)}" alt="${esc(w.alt || titleOf(w))}" loading="lazy" decoding="async"></span>
     <span class="card-meta"><span class="mono num">${noOf(w)}</span><span class="card-title">${esc(titleOf(w))}</span><span class="mono card-ai">${esc(aiLabel(w.ai))}</span></span>`;
   return sel
     ? `<li class="card${picked ? ' is-picked' : ''}"><button type="button" class="card-link" data-pick="${esc(w.id)}" aria-pressed="${picked}">${inner}<span class="pick" aria-hidden="true">${ICON.check}</span></button></li>`
@@ -291,7 +291,7 @@ function viewWork() {
       </dl>
     </section>
     <nav class="strip" aria-label="作品一覧">
-      <ol>${list.map((x, k) => `<li><a href="${workHref(x, ctx)}" data-keep-scroll ${k === i ? 'aria-current="true"' : ''} aria-label="${esc(titleOf(x))}"><img src="${thumb(x)}" alt="" loading="lazy" decoding="async"></a></li>`).join('')}</ol>
+      <ol>${list.map((x, k) => `<li><a href="${workHref(x, ctx)}" data-keep-scroll ${k === i ? 'aria-current="true"' : ''} aria-label="${esc(titleOf(x))}"><img src="${thumb(x)}" data-full="${full(x)}" alt="" loading="lazy" decoding="async"></a></li>`).join('')}</ol>
     </nav>
     <p class="mono keys"><kbd>←</kbd><kbd>→</kbd> 作品を移動　<kbd>ESC</kbd> 一覧に戻る</p>
     ${footer()}`;
@@ -603,6 +603,7 @@ function openEdit(w) {
   editing = w;
   $('editForm').reset();
   $('editEyebrow').textContent = `EDIT · WORK ${noOf(w)}`;
+  $('editPreview').dataset.full = api.fullUrl(w);
   $('editPreview').src = api.thumbUrl(w);
   $('editName').value = w.title || '';
   $('editAi').innerHTML = aiOptions(aiByKey(w.ai).key);
@@ -681,6 +682,12 @@ async function bulkSetAi(ai) {
   await refresh();
   toast(fail ? `${ok} 件を変更、${fail} 件は失敗しました。${lastError}` : `${ok} 件を ${aiLabel(ai)} に変更しました。`, fail > 0);
 }
+
+// A missing thumbnail (older uploads) falls back to the display image.
+document.addEventListener('error', e => {
+  const img = e.target;
+  if (img?.tagName === 'IMG' && img.dataset.full && img.getAttribute('src') !== img.dataset.full) img.src = img.dataset.full;
+}, true);
 
 // ─── boot ───────────────────────────────────────────────────────────────
 navigate();
