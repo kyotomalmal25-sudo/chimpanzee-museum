@@ -101,8 +101,21 @@ const ICON = {
   arrow: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11.5M11 5l5 5-5 5"/></svg>',
 };
 
-// Glossy sphere for an AI category.
-const aiTile = a => `<i class="ai-orb" style="--o1:${a.orb[0]};--o2:${a.orb[1]};--o3:${a.orb[2]}" aria-hidden="true"></i>`;
+// Glossy, oil-paint sphere for an AI category (inline SVG; shared filters live in index.html).
+const aiTile = a => {
+  const id = `orb-${a.slug}`;
+  const dabs = a.paint.dabs.map(([c, x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`).join('');
+  return `<svg class="ai-orb" viewBox="0 0 40 40" aria-hidden="true">
+    <defs><clipPath id="${id}-c"><circle cx="20" cy="20" r="19"/></clipPath></defs>
+    <g clip-path="url(#${id}-c)">
+      <g filter="url(#cm-paint)"><rect x="-4" y="-4" width="48" height="48" fill="${a.paint.base}"/>${dabs}</g>
+      <circle cx="20" cy="20" r="19" fill="url(#cm-shade)"/>
+      <ellipse cx="14" cy="11.5" rx="8.5" ry="5.5" fill="url(#cm-gloss)" transform="rotate(-28 14 11.5)"/>
+      <circle cx="12" cy="10" r="1.7" fill="#fff" opacity=".9"/>
+    </g>
+    <circle cx="20" cy="20" r="18.6" fill="none" stroke="rgba(38,39,31,.18)" stroke-width=".8"/>
+  </svg>`;
+};
 
 function renderNav() {
   const c = counts();
