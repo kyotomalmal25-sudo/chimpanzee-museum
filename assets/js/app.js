@@ -101,6 +101,7 @@ const ICON = {
   note: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4.5h12v8.5H9l-3.5 3v-3H4z"/><path d="M7 8h6M7 10.5h4"/></svg>',
   pencil: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16l1-4 8.5-8.5a2.1 2.1 0 013 3L8 15l-4 1z"/><path d="M12 5l3 3"/></svg>',
   plus: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>',
+  minus: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12"/></svg>',
   check: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="m6.5 10 2.5 2.5 4.5-5"/></svg>',
   out: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4H4.5v12H8M12 6.5 15.5 10 12 13.5M15.5 10H8"/></svg>',
   left: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5"/></svg>',
@@ -368,7 +369,15 @@ function viewWork() {
       </div>
     </div>
     <figure class="stage" id="stage">
-      <img src="${full(w)}" alt="${esc(w.alt || titleOf(w))}" decoding="async" fetchpriority="high">
+      <div class="stage-scroll" id="stageScroll">
+        <img id="stageImg" src="${full(w)}" alt="${esc(w.alt || titleOf(w))}" decoding="async" fetchpriority="high">
+      </div>
+      <div class="zoom-bar" role="group" aria-label="拡大表示">
+        <button class="zoom-btn" type="button" data-zoom-act="out" aria-label="縮小">${ICON.minus}</button>
+        <input class="zoom-range" type="range" id="zoomRange" min="50" max="150" step="10" value="100" aria-label="拡大率（50〜150%）">
+        <button class="zoom-btn" type="button" data-zoom-act="in" aria-label="拡大">${ICON.plus}</button>
+        <button class="zoom-value mono" type="button" id="zoomValue" data-zoom-act="reset" title="クリックで100%に戻す">100%</button>
+      </div>
     </figure>
     <section class="plate">
       <div>
@@ -488,6 +497,7 @@ function render() {
   if (route.name === 'work') {
     const cur = main.querySelector('.strip [aria-current]'); const ol = main.querySelector('.strip ol');
     if (cur && ol) ol.scrollLeft = cur.parentElement.offsetLeft - ol.clientWidth / 2 + cur.offsetWidth / 2;
+    zoomBase = null; applyZoom(100);
   }
   if (route.name === 'notes' && state.status !== 'loading') {
     drawHandle = mountNotes(main.querySelector('#notesApp'), { admin: state.admin, demo, onToast: toast });
@@ -547,7 +557,9 @@ document.addEventListener('keydown', e => {
 });
 
 let touch = null;
-main.addEventListener('touchstart', e => { if (route.name === 'work' && e.target.closest('#stage')) touch = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
+main.addEventListener('touchstart', e => {
+  if (route.name === 'work' && e.target.closest('#stage') && !$('stageScroll')?.classList.contains('is-zoomed')) touch = [e.touches[0].clientX, e.touches[0].clientY];
+}, { passive: true });
 main.addEventListener('touchend', e => {
   if (!touch) return;
   const dx = e.changedTouches[0].clientX - touch[0], dy = e.changedTouches[0].clientY - touch[1];
@@ -556,6 +568,49 @@ main.addEventListener('touchend', e => {
   const { ctx, list, i } = workContext();
   const t = dx < 0 ? list[i + 1] : list[i - 1];
   if (t) go(workHref(t, ctx), { keepScroll: true });
+});
+
+// ─── viewing room: zoom 50–150% ─────────────────────────────────────────
+let zoomBase = null; // {w,h} in px of the image at its natural 100% fit
+function captureZoomBase(done) {
+  const img = $('stageImg');
+  if (!img) return;
+  const measure = () => {
+    const wasWidth = img.style.width, wasHeight = img.style.height;
+    img.style.width = ''; img.style.height = '';
+    const r = img.getBoundingClientRect();
+    zoomBase = { w: r.width, h: r.height };
+    img.style.width = wasWidth; img.style.height = wasHeight;
+    done?.();
+  };
+  if (img.complete && img.naturalWidth) measure(); else img.addEventListener('load', measure, { once: true });
+}
+function applyZoom(v) {
+  const img = $('stageImg'), wrap = $('stageScroll'), val = $('zoomValue'), range = $('zoomRange');
+  if (!img || !wrap) return;
+  v = Math.max(50, Math.min(150, Math.round(v / 10) * 10));
+  if (val) val.textContent = `${v}%`;
+  if (range) range.value = String(v);
+  if (!zoomBase) { captureZoomBase(() => applyZoom(v)); return; }
+  if (v === 100) {
+    wrap.classList.remove('is-zoomed');
+    img.style.width = ''; img.style.height = '';
+  } else {
+    wrap.classList.toggle('is-zoomed', v > 100);
+    img.style.width = `${Math.round(zoomBase.w * v / 100)}px`;
+    img.style.height = 'auto';
+  }
+}
+main.addEventListener('input', e => {
+  if (e.target.id === 'zoomRange') applyZoom(+e.target.value);
+});
+main.addEventListener('click', e => {
+  const act = e.target.closest('[data-zoom-act]')?.dataset.zoomAct;
+  if (!act) return;
+  const cur = +($('zoomRange')?.value || 100);
+  if (act === 'in') applyZoom(cur + 10);
+  if (act === 'out') applyZoom(cur - 10);
+  if (act === 'reset') applyZoom(100);
 });
 
 // ─── toast ──────────────────────────────────────────────────────────────

@@ -195,6 +195,22 @@ function mockSupabase(page, db) {
     assert.match(await page.title(), /big landscape 01/);
   });
 
+  await step('viewing room: zoom 50–150%, resets on next work', async () => {
+    assert.equal(await page.locator('#zoomValue').textContent(), '100%');
+    await page.fill('#zoomRange', '150');
+    await page.dispatchEvent('#zoomRange', 'input');
+    assert.equal(await page.locator('#zoomValue').textContent(), '150%');
+    assert.match(await page.locator('#stageScroll').getAttribute('class'), /is-zoomed/);
+    await page.click('#zoomValue');
+    assert.equal(await page.locator('#zoomValue').textContent(), '100%');
+    assert.doesNotMatch(await page.locator('#stageScroll').getAttribute('class'), /is-zoomed/);
+    await page.click('[aria-label="次の作品"]');
+    await page.waitForSelector('#stageImg');
+    assert.equal(await page.locator('#zoomValue').textContent(), '100%');
+    await page.goBack();
+    await page.waitForSelector('#stage img');
+  });
+
   await step('edit title + AI', async () => {
     await page.click('[data-act-main="edit"]');
     await page.fill('#editName', '緑の平原');
