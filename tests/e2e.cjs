@@ -119,9 +119,10 @@ function mockSupabase(page, db) {
     assert.ok(await page.locator('.sample-note').isVisible());
   });
 
-  await step('no admin entry point in public UI', async () => {
+  await step('sidebar has a quiet admin login link, no admin tools yet', async () => {
     assert.equal(await page.locator('#adminTools').isVisible(), false);
-    assert.equal(await page.getByText('管理者ログイン').isVisible(), false);
+    assert.equal(await page.locator('#sideAdminLink').isVisible(), true);
+    assert.equal(await page.locator('#sideAdminLink').getAttribute('href'), '/admin');
   });
 
   await step('wrong password shows error', async () => {
