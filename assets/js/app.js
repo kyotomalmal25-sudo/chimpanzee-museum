@@ -220,6 +220,20 @@ function card(w, ctx) {
     : `<li class="card"><a class="card-link" href="${href}">${inner}<span class="card-go mono" aria-hidden="true">VIEW ${ICON.arrow}</span></a></li>`;
 }
 
+// A loose pencil sketch of gallery arches, drawn behind page heads.
+const SKETCH = cls => `<svg class="sketch ${cls}" viewBox="0 0 760 420" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true">
+  <defs><filter id="pencil-${cls}"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter></defs>
+  <g filter="url(#pencil-${cls})" stroke-width="1.3">
+    <path d="M60 400V190c0-70 50-120 110-120s110 50 110 120v210"/><path d="M66 400V194c0-66 46-114 104-114s104 48 104 114v206" opacity=".55"/>
+    <path d="M300 400V150c0-86 62-146 140-146s140 60 140 146v250"/><path d="M307 400V155c0-80 58-138 133-138s133 58 133 138v245" opacity=".55"/>
+    <path d="M600 400V210c0-58 40-98 90-98"/><path d="M20 402h730" /><path d="M40 410h650" opacity=".5"/>
+    <rect x="355" y="170" width="170" height="130" rx="2"/><rect x="368" y="183" width="144" height="104" opacity=".6"/>
+    <rect x="115" y="215" width="110" height="82"/><path d="M640 250h70v60h-70z" opacity=".7"/>
+    <path d="M378 330c20 6 104 6 124 0M120 318c20 5 80 5 100 0" opacity=".45"/>
+    <path d="M325 60l-18 30M338 52l-22 38M556 60l18 30M543 52l22 38" opacity=".35"/>
+  </g>
+</svg>`;
+
 function viewHome() {
   const list = shown();
   const latest = list[0];
@@ -227,6 +241,7 @@ function viewHome() {
   return `
     ${crumbs('PUBLIC ARCHIVE', 'WELCOME')}
     <section class="hero">
+      ${SKETCH('hero-sketch')}
       <div class="hero-copy">
         <p class="mono eyebrow"><span class="dot" aria-hidden="true"></span>A PUBLIC MUSEUM OF AI &amp; CURIOSITY</p>
         <h1 class="display">Chimpanzee<br><em>Museum.</em></h1>
@@ -259,6 +274,7 @@ function viewCollection() {
   return `
     ${crumbs('PUBLIC ARCHIVE', 'COLLECTION', ...(ai ? [ai.label.toUpperCase()] : []))}
     <section class="page-head">
+      ${SKETCH('head-sketch')}
       <p class="mono eyebrow">${ai ? 'CREATED WITH' : 'ART, WITHOUT A REASON.'}</p>
       <h1 class="display md">${ai ? esc(ai.label) : 'The Collection'}<span class="accent">.</span></h1>
       <p class="lede">${ai ? `${esc(ai.label)} と生まれた作品。` : 'AIと生まれた、少し不思議なコレクション。'}</p>
@@ -338,6 +354,7 @@ function viewAbout() {
   return `
     ${crumbs('PUBLIC ARCHIVE', 'ABOUT')}
     <section class="page-head">
+      ${SKETCH('head-sketch')}
       <p class="mono eyebrow">ABOUT THIS MUSEUM</p>
       <h1 class="display md">No reason<span class="accent">.</span></h1>
     </section>
@@ -724,6 +741,11 @@ document.addEventListener('error', e => {
   const img = e.target;
   if (img?.tagName === 'IMG' && img.dataset.full && img.getAttribute('src') !== img.dataset.full) img.src = img.dataset.full;
 }, true);
+
+// Fade the top edge only once the page has scrolled.
+const onScroll = () => document.documentElement.classList.toggle('is-scrolled', window.scrollY > 8);
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
 
 // ─── boot ───────────────────────────────────────────────────────────────
 navigate();
