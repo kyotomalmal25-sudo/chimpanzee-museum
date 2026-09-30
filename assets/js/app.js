@@ -70,6 +70,7 @@ export function go(href, { replace = false, keepScroll = false } = {}) {
 function navigate(keepScroll = false) {
   const next = parse(location.pathname, location.search);
   if (next.name !== 'collection') { state.selecting = false; state.selected.clear(); }
+  if (next.name === 'home' && route.name !== 'home') heroPickId = null;
   route = next;
   closeDrawer();
   render();
@@ -94,6 +95,7 @@ const ICON = {
   home: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 9 10 3.5 16.5 9v7.5h-4.5v-5h-4v5H3.5z"/></svg>',
   grid: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M10 3v14M3 10h14"/></svg>',
   about: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 9v5M10 6.2v.1"/></svg>',
+  shuffle: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6h3.2c1.6 0 2.6.8 3.5 2.2l.6 1c.9 1.4 1.9 2.2 3.5 2.2H17M14.5 9l2.5 2.4-2.5 2.4M3 13.6h3.2c1.2 0 2-.4 2.7-1.2M14.5 3.6 17 6l-2.5 2.4M11.3 7c.6-.6 1.3-1 2.5-1H17"/></svg>',
   pencil: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16l1-4 8.5-8.5a2.1 2.1 0 013 3L8 15l-4 1z"/><path d="M12 5l3 3"/></svg>',
   plus: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>',
   check: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="m6.5 10 2.5 2.5 4.5-5"/></svg>',
@@ -238,10 +240,20 @@ const SKETCH = cls => `<svg class="sketch ${cls}" viewBox="0 0 760 420" fill="no
   </g>
 </svg>`;
 
+// The home page shows one work picked at random. The pick stays put while you are on the
+// page (re-renders keep it) and is drawn again each time you come back to the home page.
+let heroPickId = null;
+function pickHero(list, avoidId = null) {
+  if (!list.length) return null;
+  const pool = list.length > 1 ? list.filter(w => String(w.id) !== String(avoidId)) : list;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function viewHome() {
   const list = shown();
-  const latest = list[0];
-  const recent = list.slice(1, 5);
+  let pick = list.find(w => String(w.id) === String(heroPickId));
+  if (!pick) { pick = pickHero(list); heroPickId = pick?.id ?? null; }
+  const recent = list.slice(0, 4);
   return `
     ${crumbs('PUBLIC ARCHIVE', 'WELCOME')}
     <section class="hero">
@@ -255,11 +267,16 @@ function viewHome() {
           <p class="mono hero-count">${list.length} WORKS / PUBLIC ARCHIVE</p>
         </div>
       </div>
-      ${latest ? `
-      <a class="hero-piece" href="/work/${encodeURIComponent(latest.id)}">
-        <span class="mat tall"><img src="${full(latest)}" alt="${esc(latest.alt || titleOf(latest))}" fetchpriority="high" decoding="async"></span>
-        <span class="piece-cap"><span class="mono">LATEST · WORK ${noOf(latest)}</span><span class="piece-title">${esc(titleOf(latest))}</span></span>
-      </a>` : `<div class="hero-piece empty"><span class="mat tall"><span class="mono">NO WORKS YET</span></span></div>`}
+      ${pick ? `
+      <div class="hero-piece">
+        <a class="hero-link" href="/work/${encodeURIComponent(pick.id)}" aria-label="${esc(titleOf(pick))} を見る">
+          <span class="mat tall"><img src="${full(pick)}" alt="${esc(pick.alt || titleOf(pick))}" fetchpriority="high" decoding="async"></span>
+        </a>
+        <div class="piece-cap">
+          <a class="piece-meta" href="/work/${encodeURIComponent(pick.id)}"><span class="mono">PICKED AT RANDOM · WORK ${noOf(pick)}</span><span class="piece-title">${esc(titleOf(pick))}</span></a>
+          ${list.length > 1 ? `<button class="shuffle" type="button" data-act-main="shuffle" title="ほかの作品を選ぶ">${ICON.shuffle}<span>ほかの作品</span></button>` : ''}
+        </div>
+      </div>` : `<div class="hero-piece empty"><span class="mat tall"><span class="mono">NO WORKS YET</span></span></div>`}
     </section>
     ${sampleNote()}
     ${recent.length ? `
@@ -460,6 +477,7 @@ main.addEventListener('click', e => {
   if (size) { state.size = size; store.set('cm-size', size); render(); return; }
   const act = e.target.closest('[data-act-main]')?.dataset.actMain;
   if (act === 'retry') { load(); return; }
+  if (act === 'shuffle') { heroPickId = pickHero(shown(), heroPickId)?.id ?? null; render(); return; }
   if (act === 'upload') { openUpload(); return; }
   if (act === 'edit') { const w = byId(route.id); if (w) openEdit(w); return; }
   const pick = e.target.closest('[data-pick]')?.dataset.pick;
