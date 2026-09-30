@@ -101,8 +101,8 @@ const ICON = {
   arrow: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11.5M11 5l5 5-5 5"/></svg>',
 };
 
-// Monogram tile for an AI: first letter upright, second letter italic.
-const aiTile = a => `<i class="ai-tile" style="--tile-bg:${a.tint[0]};--tile-fg:${a.tint[1]}" aria-hidden="true">${esc(a.mark.slice(0, 1))}<em>${esc(a.mark.slice(1))}</em></i>`;
+// Glossy sphere for an AI category.
+const aiTile = a => `<i class="ai-orb" style="--o1:${a.orb[0]};--o2:${a.orb[1]};--o3:${a.orb[2]}" aria-hidden="true"></i>`;
 
 function renderNav() {
   const c = counts();

@@ -19,18 +19,18 @@ export const SUPABASE = {
 // menu: the categories shown in the menu and offered when posting (always, even with 0 works).
 // The rest stay readable for older rows and appear in the menu only while they have works.
 export const AIS = [
-  { key: 'Grok', slug: 'grok', label: 'Grok', mark: 'Gk', tint: ['#2B2C28', '#F1EFE6'], menu: true },
-  { key: 'GPT', slug: 'gpt', label: 'GPT', mark: 'Gp', tint: ['#DCE9E2', '#245E4A'], menu: true },
-  { key: 'Gemini', slug: 'gemini', label: 'Gemini', mark: 'Ge', tint: ['#E1E5F5', '#3A4A9E'], menu: true },
-  { key: 'Qwen', slug: 'qwen', label: 'Qwen', mark: 'Qw', tint: ['#ECE3F4', '#5E3F8F'], menu: true },
-  { key: 'MAI', slug: 'mai', label: 'MAI', mark: 'Ma', tint: ['#DDEBF4', '#1F5F8B'], menu: true },
-  { key: 'Claude', slug: 'claude', label: 'Claude', mark: 'Cl', tint: ['#F5E3D8', '#9A4A26'], menu: true },
-  { key: 'Kimi', slug: 'kimi', label: 'Kimi', mark: 'Ki', tint: ['#E8E8E2', '#4A4B44'] },
-  { key: 'Other', slug: 'other', label: 'その他', mark: '+', tint: ['#ECEBE4', '#5F6156'] },
-  { key: 'Unknown', slug: 'unknown', label: '未分類', mark: '?', tint: ['#ECEBE4', '#8A8C80'] },
+  { key: 'Grok', slug: 'grok', label: 'Grok', mark: 'Gk', orb: ['#9AA3AD', '#3A3F46', '#141619'], menu: true },
+  { key: 'GPT', slug: 'gpt', label: 'GPT', mark: 'Gp', orb: ['#8FE0C4', '#1F9A78', '#0B4F3D'], menu: true },
+  { key: 'Gemini', slug: 'gemini', label: 'Gemini', mark: 'Ge', orb: ['#9FC2FF', '#5B6CF0', '#3A2E9C'], menu: true },
+  { key: 'Qwen', slug: 'qwen', label: 'Qwen', mark: 'Qw', orb: ['#D6B6FF', '#8E55E8', '#4C2596'], menu: true },
+  { key: 'MAI', slug: 'mai', label: 'MAI', mark: 'Ma', orb: ['#A6E4FF', '#2F9BE0', '#135A92'], menu: true },
+  { key: 'Claude', slug: 'claude', label: 'Claude', mark: 'Cl', orb: ['#FFC49E', '#E0703C', '#9A3A16'], menu: true },
+  { key: 'Kimi', slug: 'kimi', label: 'Kimi', mark: 'Ki', orb: ['#E4E4E4', '#9A9A9A', '#555555'] },
+  { key: 'Other', slug: 'other', label: 'その他', mark: '+', orb: ['#F2E3C4', '#C9A566', '#80602A'] },
+  { key: 'Unknown', slug: 'unknown', label: '未分類', mark: '?', orb: ['#EDEBE4', '#BDBBB0', '#8A887E'] },
 ];
 export const DEFAULT_AI = 'Grok';
-// mark: two-letter monogram; tint: [tile background, letter colour]. Original marks, not vendor logos.
+// orb: [highlight, body, rim] colours of the glossy sphere shown in the menu (original, not vendor logos).
 
 export const aiByKey = key => AIS.find(a => a.key === key) || AIS[AIS.length - 1];
 export const aiBySlug = slug => AIS.find(a => a.slug === slug) || null;
