@@ -230,20 +230,20 @@ function card(w, ctx) {
     : `<li class="card"><a class="card-link" href="${href}">${inner}<span class="card-go mono" aria-hidden="true">VIEW ${ICON.arrow}</span></a></li>`;
 }
 
-// Faint pencil drawings. Home: the random piece hangs from a nail on a wire, with a loose
-// hand-drawn frame around it. Other page heads: a small gallery wall (three hung frames, a bench).
+// Faint pencil drawings behind page heads.
 const PENCIL = id => `<defs><filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="3.5"/></filter></defs>`;
-const HANG = `<svg class="sketch hang-wire" viewBox="0 0 480 80" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true">
-  ${PENCIL('pencil-wire')}
-  <g filter="url(#pencil-wire)" stroke-width="1.2" vector-effect="non-scaling-stroke">
-    <path d="M240 10L60 78M240 10L420 78" vector-effect="non-scaling-stroke"/><path d="M242 12L62 79" opacity=".45" vector-effect="non-scaling-stroke"/>
-  </g>
-</svg><span class="sketch hang-nail" aria-hidden="true"></span>
-<svg class="sketch hang-frame" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true">
-  ${PENCIL('pencil-frame')}
-  <g filter="url(#pencil-frame)">
-    <path d="M1 2L99 1L98.5 99L1.5 98.5Z" vector-effect="non-scaling-stroke" stroke-width="1.2"/>
-    <path d="M-1 4L100 -.5M101 3L99.5 101M.5 100.5L98 101.5M2.5 -1L.5 97" vector-effect="non-scaling-stroke" stroke-width="1" opacity=".5"/>
+// Home: a quiet studio corner (easel with a blank canvas, a stool, a jar of brushes) drawn low
+// between the title and the piece, so it never sits on top of the artwork itself.
+const STUDIO = `<svg class="sketch studio-sketch" viewBox="0 0 360 300" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  ${PENCIL('pencil-studio')}
+  <g filter="url(#pencil-studio)" stroke-width="1.3">
+    <path d="M150 20l-52 262M150 20l52 262M150 20v250"/><path d="M152 22l-50 258" opacity=".45"/>
+    <path d="M92 196h116"/><path d="M96 202h108" opacity=".5"/>
+    <path d="M100 70h100v122H100z"/><path d="M108 78h84v106h-84z" opacity=".45"/>
+    <path d="M124 120c10-14 24-14 34-2s24 12 32 0" opacity=".4"/>
+    <path d="M250 214h70M250 214v-7h70v7M258 214l-8 68M312 214l8 68M254 250h62" />
+    <path d="M40 256h26l-3 26H43z"/><path d="M47 256l-6-40M53 256l2-46M59 256l9-38" /><path d="M39 214l4 4M53 208v4M68 216l-3 4" opacity=".6"/>
+    <path d="M0 284h360"/><path d="M24 292h300" opacity=".45"/>
   </g>
 </svg>`;
 const SKETCH = cls => `<svg class="sketch ${cls}" viewBox="0 0 520 300" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -275,6 +275,7 @@ function viewHome() {
   return `
     ${crumbs('PUBLIC ARCHIVE', 'WELCOME')}
     <section class="hero">
+      ${STUDIO}
       <div class="hero-copy">
         <p class="mono eyebrow"><span class="dot" aria-hidden="true"></span>A PUBLIC MUSEUM OF AI &amp; CURIOSITY</p>
         <h1 class="display">Chimpanzee<br><em>Museum.</em></h1>
@@ -286,7 +287,6 @@ function viewHome() {
       </div>
       ${pick ? `
       <div class="hero-piece">
-        ${HANG}
         <a class="hero-link" href="/work/${encodeURIComponent(pick.id)}" aria-label="${esc(titleOf(pick))} を見る">
           <span class="mat tall"><img src="${full(pick)}" alt="${esc(pick.alt || titleOf(pick))}" fetchpriority="high" decoding="async"></span>
         </a>

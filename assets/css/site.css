@@ -28,8 +28,8 @@
   --jp: "Noto Sans JP", "DM Sans", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  --side: 252px;
-  --rail: 76px;
+  --side: 262px;
+  --rail: 86px;
   --gut: clamp(20px, 4.2vw, 64px);
   --ease: cubic-bezier(.2, .7, .2, 1);
   color-scheme: light;
@@ -374,7 +374,7 @@ html.is-scrolled .shell::before { opacity: 1; }
 
 /* floating side panel */
 .side {
-  top: 12px; height: calc(100dvh - 24px); margin: 12px 0 12px 12px; z-index: 20;
+  top: 18px; height: calc(100dvh - 36px); margin: 18px 0 18px 22px; z-index: 20;
   border: 1px solid rgba(217, 205, 180, .55); border-radius: 18px;
   background: rgba(255, 252, 244, .72); backdrop-filter: blur(14px) saturate(1.08);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), var(--shadow-soft);
@@ -423,11 +423,7 @@ html.is-scrolled .shell::before { opacity: 1; }
 /* faint pencil drawings: the home piece hangs on a wire; page heads get a small gallery wall */
 .hero { position: relative; isolation: isolate; }
 .sketch { position: absolute; pointer-events: none; color: var(--ink); opacity: .2; }
-.hero-piece { position: relative; margin-top: 76px; }
-.hero-link { position: relative; z-index: 1; }
-.sketch.hang-wire { left: 6%; width: 88%; top: -68px; height: 72px; }
-.sketch.hang-nail { left: 50%; top: -64px; width: 7px; height: 7px; margin-left: -3.5px; border: 1.3px solid currentColor; border-radius: 50%; opacity: .3; }
-.sketch.hang-frame { left: -10px; top: -10px; width: calc(100% + 20px); aspect-ratio: 1; height: auto; opacity: .22; }
+.sketch.studio-sketch { z-index: -1; left: 33%; bottom: 58px; width: min(22%, 300px); height: auto; opacity: .14; }
 .page-head { position: relative; isolation: isolate; }
 .sketch.head-sketch { z-index: -1; right: 2%; bottom: 14px; width: min(38%, 400px); height: auto; opacity: .12; }
 
@@ -590,8 +586,7 @@ html.is-scrolled .shell::before { opacity: 1; }
   .side { position: fixed; inset: 0 auto 0 0; z-index: 40; width: min(300px, 84vw); height: 100dvh; padding: 18px 16px; align-items: stretch !important; transform: translateX(-104%); visibility: hidden; transition: transform .35s var(--ease), visibility 0s .35s; }
   .side { margin: 0; top: 0; height: 100dvh; border-radius: 0 18px 18px 0; border-left: 0; background: rgba(255, 252, 244, .96); }
   .shell::before { display: none; }
-  .sketch.hang-frame { aspect-ratio: 4 / 3.4; }
-  .hero-piece { margin-top: 60px; }
+  .sketch.studio-sketch { display: none; }
   .sketch.head-sketch { display: none; }
   .shell[data-drawer="open"] .side { transform: none; visibility: visible; transition: transform .35s var(--ease); box-shadow: 20px 0 60px -30px rgba(38, 39, 31, .4); }
   .topbar .brand-name { display: block; }
@@ -607,7 +602,7 @@ html.is-scrolled .shell::before { opacity: 1; }
   .main { padding: 0 20px; }
   .crumbs { padding: 16px 0 14px; }
   .crumbs-site { display: none !important; }
-  .hero { grid-template-columns: 1fr; padding: 36px 0 40px; gap: 16px; }
+  .hero { grid-template-columns: 1fr; padding: 36px 0 40px; gap: 40px; }
   .hero-piece { justify-self: stretch; max-width: none; }
   .hero-piece .mat.tall { aspect-ratio: 4 / 3.4; }
   .hero-actions { margin-top: 32px; }
